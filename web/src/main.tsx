@@ -5,6 +5,7 @@ import { Feed } from "./pages/Feed";
 import { ExperimentDetail } from "./pages/ExperimentDetail";
 import { GroupListing } from "./pages/GroupListing";
 import { Trash } from "./pages/Trash";
+import { GraphView } from "./pages/GraphView";
 import { CatalogPage } from "./pages/Catalog";
 import { ComponentPage } from "./pages/ComponentDetail";
 import { DocPage } from "./pages/Documents";
@@ -21,6 +22,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/" element={<Feed />} />
         <Route path="/e/:slug" element={<ExperimentDetail />} />
         <Route path="/g/:group" element={<GroupListing />} />
+        <Route path="/graph" element={<GraphView />} />
         <Route path="/trash" element={<Trash />} />
         {/* Laminae pages */}
         <Route path="/catalog" element={<LaminaeLayout><CatalogPage /></LaminaeLayout>} />

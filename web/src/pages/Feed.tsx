@@ -310,6 +310,9 @@ export function Feed() {
             <button onClick={() => setShowCreate(s => !s)} className="btn" style={{ fontSize: "0.75rem", padding: "0.25rem 0.7rem" }}>
               {showCreate ? "Cancel" : "+ New"}
             </button>
+            <Link to="/graph" className="btn-small">
+              Graph
+            </Link>
             <Link to="/catalog" className="btn-small">
               Components
             </Link>
