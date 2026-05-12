@@ -159,6 +159,25 @@ export async function addComment(slug: string, body_markdown: string) {
   return resp.json();
 }
 
+export async function createExperiment(fields: {
+  title: string;
+  name?: string;
+  group?: string;
+  kind?: string;
+  tags?: string[];
+  intent?: string;
+}): Promise<{ experiment_id: string; slug: string }> {
+  const resp = await authFetch("/experiments/create", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "single",
+      tags: [],
+      ...fields,
+    }),
+  });
+  return resp.json();
+}
+
 export async function updateExperiment(slug: string, fields: { title?: string; group?: string | null; status?: string }) {
   const resp = await authFetch(`/experiments/${slug}`, {
     method: "PATCH",

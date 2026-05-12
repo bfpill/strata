@@ -712,7 +712,9 @@ export function ExperimentDetail() {
         ? ("scripts" as const)
         : modeParam === "data"
           ? ("data" as const)
-          : ("artifacts" as const);
+          : modeParam === "doc"
+            ? ("doc" as const)
+            : ("artifacts" as const);
   const [sidebarWidth, setSidebarWidth] = useState(getInitialSidebarWidth);
   const [artifactActionsMap, setArtifactActionsMap] = useState<
     Record<string, PlotActions>
@@ -1872,6 +1874,12 @@ export function ExperimentDetail() {
                 Simulator
               </button>
             )}
+            <button
+              className={`main-mode-tab ${mainMode === "doc" ? "active" : ""}`}
+              onClick={() => updateParams({ mode: "doc" })}
+            >
+              Doc
+            </button>
           </div>
 
           {/* Artifacts mode */}
@@ -2092,6 +2100,11 @@ export function ExperimentDetail() {
                   updateParams(updates);
                 }}
               />
+            </div>
+          )}
+          {mainMode === "doc" && (
+            <div className="artifact-content" style={{ padding: "1.5rem" }}>
+              <ExperimentDoc slug={exp.slug} />
             </div>
           )}
         </div>

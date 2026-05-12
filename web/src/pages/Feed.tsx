@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import {
   listExperiments,
   searchExperiments,
+  createExperiment,
   getAuth,
   setAuth,
   clearAuth,
@@ -91,8 +92,62 @@ function AuthSettings() {
   );
 }
 
+function CreateExperimentForm({ onCreated }: { onCreated: (slug: string) => void }) {
+  const [title, setTitle] = useState("");
+  const [group, setGroup] = useState("");
+  const [intent, setIntent] = useState("");
+  const [tags, setTags] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+    setCreating(true);
+    setError(null);
+    try {
+      const result = await createExperiment({
+        title: title.trim(),
+        group: group.trim() || undefined,
+        intent: intent.trim() || undefined,
+        tags: tags.trim() ? tags.split(",").map(t => t.trim()).filter(Boolean) : [],
+      });
+      onCreated(result.slug);
+    } catch (e: any) {
+      setError(e.message);
+      setCreating(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleCreate} style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "1rem 1.25rem", marginBottom: "1rem" }}>
+      <div style={{ fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.75rem" }}>New Experiment</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" autoFocus
+          className="search-input" style={{ flex: "none" }} />
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <input value={group} onChange={e => setGroup(e.target.value)} placeholder="Group (optional)"
+            className="search-input" />
+          <input value={tags} onChange={e => setTags(e.target.value)} placeholder="Tags (comma-separated)"
+            className="search-input" />
+        </div>
+        <textarea value={intent} onChange={e => setIntent(e.target.value)} placeholder="Intent — what is this experiment for?"
+          rows={2} style={{ fontFamily: "inherit", fontSize: "0.85rem", padding: "0.4rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "6px", resize: "vertical" }} />
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <button type="submit" disabled={creating || !title.trim()} className="btn">
+            {creating ? "Creating..." : "Create"}
+          </button>
+          {error && <span style={{ color: "#dc2626", fontSize: "0.8rem" }}>{error}</span>}
+        </div>
+      </div>
+    </form>
+  );
+}
+
 export function Feed() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showCreate, setShowCreate] = useState(false);
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -252,6 +307,11 @@ export function Feed() {
           <div
             style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
           >
+            {getAuth() && (
+              <button onClick={() => setShowCreate(s => !s)} className="btn" style={{ fontSize: "0.75rem", padding: "0.25rem 0.7rem" }}>
+                {showCreate ? "Cancel" : "+ New"}
+              </button>
+            )}
             <Link to="/catalog" className="btn-small">
               Components
             </Link>
@@ -265,6 +325,10 @@ export function Feed() {
           </div>
         </div>
       </header>
+
+      {showCreate && (
+        <CreateExperimentForm onCreated={(slug) => navigate(`/e/${slug}`)} />
+      )}
 
       <form onSubmit={handleSearch} style={{ marginBottom: "0.75rem" }}>
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
