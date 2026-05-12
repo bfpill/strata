@@ -15,6 +15,7 @@ export interface Experiment {
   notes_markdown: string | null;
   notes_updated_at: string | null;
   notes_updated_by: string | null;
+  doc_slugs: string | null; // JSON array of linked doc slugs
   visibility: string;
   /** Max(created_at, max(updated_at) over artifacts). Server-supplied. */
   last_activity_at?: string | null;
@@ -178,7 +179,7 @@ export async function createExperiment(fields: {
   return resp.json();
 }
 
-export async function updateExperiment(slug: string, fields: { title?: string; group?: string | null; status?: string }) {
+export async function updateExperiment(slug: string, fields: { title?: string; group?: string | null; status?: string; doc_slugs?: string[] }) {
   const resp = await authFetch(`/experiments/${slug}`, {
     method: "PATCH",
     body: JSON.stringify(fields),

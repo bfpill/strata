@@ -774,6 +774,10 @@ experimentsRouter.patch("/:id", authMiddleware, async (c) => {
     sets.push("status = ?");
     binds.push(body.status);
   }
+  if (body.doc_slugs !== undefined) {
+    sets.push("doc_slugs = ?");
+    binds.push(JSON.stringify(body.doc_slugs));
+  }
 
   if (sets.length === 0) {
     return c.json({ error: "No fields to update" }, 400);

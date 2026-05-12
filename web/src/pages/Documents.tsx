@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import db from '@/lib/db'
 import { LiveDoc } from '@/components/core/content/LiveDoc'
+import { listExperiments, type Experiment } from '@/api'
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -57,6 +58,19 @@ function DocBrowser() {
 
   const timeline = buildTimeline(drafts)
 
+  const [experiments, setExperiments] = useState<Experiment[]>([])
+  useEffect(() => {
+    listExperiments(100, 0).then(r => setExperiments(r.experiments)).catch(() => {})
+  }, [])
+  const linkedDocs = experiments
+    .filter(e => e.doc_slugs)
+    .flatMap(e => {
+      try {
+        const slugs: string[] = JSON.parse(e.doc_slugs!)
+        return slugs.map(s => ({ docSlug: s, experiment: e }))
+      } catch { return [] }
+    })
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-zinc-200 px-6 py-8">
@@ -89,6 +103,29 @@ function DocBrowser() {
             Open
           </button>
         </form>
+
+        {/* Experiment-linked docs */}
+        {linkedDocs.length > 0 && (
+          <div className="mb-10">
+            <h2 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-4">Linked to Experiments</h2>
+            <div className="space-y-2">
+              {linkedDocs.map(({ docSlug, experiment: exp }) => (
+                <Link
+                  key={`${exp.slug}-${docSlug}`}
+                  to={`/doc/${docSlug}`}
+                  className="block rounded-lg border border-zinc-200 bg-white p-3 hover:border-zinc-300 hover:shadow-sm transition-all no-underline"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-zinc-800">{docSlug}</span>
+                    <span className="text-[10px] font-mono text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded">
+                      {exp.title}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Timeline */}
         {isLoading ? (

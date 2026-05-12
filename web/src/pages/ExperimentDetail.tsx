@@ -54,31 +54,84 @@ import {
   type Artifact,
 } from "../api";
 import { LiveDoc } from "../components/core/content/LiveDoc";
-import db from "../lib/db";
 
-function ExperimentDoc({ slug }: { slug: string }) {
-  const { data, isLoading } = db.useQuery({ draftPosts: { $: { where: { slug } } } });
-  const hasDoc = !isLoading && (data?.draftPosts?.length ?? 0) > 0;
+function ExperimentDoc({ experiment }: { experiment: Experiment }) {
+  const docSlugs: string[] = (() => {
+    try { return experiment.doc_slugs ? JSON.parse(experiment.doc_slugs) : []; }
+    catch { return []; }
+  })();
+  const [newSlug, setNewSlug] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const isAuthed = !!getAuth();
+
+  const updateSlugs = async (slugs: string[]) => {
+    setSaving(true);
+    try {
+      await updateExperiment(experiment.slug, { doc_slugs: slugs } as any);
+      experiment.doc_slugs = JSON.stringify(slugs);
+    } catch (e: any) {
+      alert(e.message);
+    }
+    setSaving(false);
+  };
+
+  const addSlug = async () => {
+    const s = newSlug.trim();
+    if (!s || docSlugs.includes(s)) return;
+    await updateSlugs([...docSlugs, s]);
+    setNewSlug("");
+  };
+
+  const removeSlug = async (s: string) => {
+    await updateSlugs(docSlugs.filter(x => x !== s));
+  };
 
   return (
     <div>
-      <h4 style={{ fontSize: "0.8rem", fontWeight: 600, color: "#374151", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        Document
+      <h4 style={{ fontSize: "0.8rem", fontWeight: 600, color: "#374151", marginBottom: "0.5rem" }}>
+        Linked Documents
       </h4>
-      {isLoading ? (
-        <div className="meta" style={{ fontSize: "0.8rem" }}>Loading...</div>
-      ) : hasDoc ? (
-        <div style={{ fontSize: "0.85rem" }}>
-          <LiveDoc slug={slug} />
-        </div>
-      ) : (
-        <div className="meta" style={{ fontSize: "0.8rem" }}>
-          <p style={{ marginBottom: "0.5rem" }}>No linked document yet.</p>
+
+      {docSlugs.length === 0 && (
+        <div className="meta" style={{ fontSize: "0.8rem", marginBottom: "0.75rem" }}>
           <p style={{ color: "#9ca3af", lineHeight: 1.5 }}>
-            Create a Google Doc with <code style={{ background: "#f3f4f6", padding: "0.1rem 0.3rem", borderRadius: "3px", fontSize: "0.75rem" }}>slug: {slug}</code> at
-            the top, then sync it to see live content here with embedded components.
+            No documents linked yet. Add a Google Doc slug below, or create a doc with{" "}
+            <code style={{ background: "#f3f4f6", padding: "0.1rem 0.3rem", borderRadius: "3px", fontSize: "0.75rem" }}>slug: {experiment.slug}</code>{" "}
+            at the top.
           </p>
         </div>
+      )}
+
+      {docSlugs.map(s => (
+        <div key={s} style={{ marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+            <code style={{ background: "#f3f4f6", padding: "0.15rem 0.5rem", borderRadius: "4px", fontSize: "0.8rem", color: "#374151" }}>{s}</code>
+            {isAuthed && (
+              <button onClick={() => removeSlug(s)} disabled={saving} className="btn-small" style={{ fontSize: "0.7rem", color: "#dc2626" }}>
+                Remove
+              </button>
+            )}
+          </div>
+          <div style={{ fontSize: "0.85rem" }}>
+            <LiveDoc slug={s} />
+          </div>
+        </div>
+      ))}
+
+      {isAuthed && (
+        <form onSubmit={e => { e.preventDefault(); addSlug(); }} style={{ display: "flex", gap: "0.4rem", marginTop: "0.5rem" }}>
+          <input
+            value={newSlug}
+            onChange={e => setNewSlug(e.target.value)}
+            placeholder="Doc slug to link..."
+            className="search-input"
+            style={{ fontSize: "0.8rem" }}
+          />
+          <button type="submit" disabled={saving || !newSlug.trim()} className="btn-small">
+            {saving ? "..." : "Add"}
+          </button>
+        </form>
       )}
     </div>
   );
@@ -1832,7 +1885,7 @@ export function ExperimentDetail() {
                   </>
                 )}
                 {sidebarTab === "doc" && (
-                  <ExperimentDoc slug={exp.slug} />
+                  <ExperimentDoc experiment={exp} />
                 )}
               </div>
             </div>
@@ -2104,7 +2157,7 @@ export function ExperimentDetail() {
           )}
           {mainMode === "doc" && (
             <div className="artifact-content" style={{ padding: "1.5rem" }}>
-              <ExperimentDoc slug={exp.slug} />
+              <ExperimentDoc experiment={exp} />
             </div>
           )}
         </div>

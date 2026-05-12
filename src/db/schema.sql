@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS experiments (
   synth_prob_json TEXT,              -- JSON: resolved synth_prob (model, task, codes, config)
   notes_markdown TEXT,
   notes_updated_at TEXT,
-  notes_updated_by TEXT
+  notes_updated_by TEXT,
+  doc_slugs TEXT                      -- JSON array of linked doc slugs
 );
 
 CREATE TABLE IF NOT EXISTS runs (
