@@ -9,6 +9,7 @@ import { CatalogPage } from "./pages/Catalog";
 import { ComponentPage } from "./pages/ComponentDetail";
 import { DocPage } from "./pages/Documents";
 import { SimulationPage } from "./pages/Simulation";
+import { LaminaeLayout } from "./pages/LaminaeLayout";
 import "./components/laminae";
 import "./style.css";
 
@@ -22,11 +23,11 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/g/:group" element={<GroupListing />} />
         <Route path="/trash" element={<Trash />} />
         {/* Laminae pages */}
-        <Route path="/catalog" element={<CatalogPage />} />
-        <Route path="/component/:id" element={<ComponentPage />} />
-        <Route path="/doc" element={<DocPage />} />
-        <Route path="/doc/:slug" element={<DocPage />} />
-        <Route path="/simulation/cusp" element={<SimulationPage />} />
+        <Route path="/catalog" element={<LaminaeLayout><CatalogPage /></LaminaeLayout>} />
+        <Route path="/component/:id" element={<LaminaeLayout><ComponentPage /></LaminaeLayout>} />
+        <Route path="/doc" element={<LaminaeLayout><DocPage /></LaminaeLayout>} />
+        <Route path="/doc/:slug" element={<LaminaeLayout><DocPage /></LaminaeLayout>} />
+        <Route path="/simulation/cusp" element={<LaminaeLayout><SimulationPage /></LaminaeLayout>} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
