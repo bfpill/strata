@@ -148,8 +148,6 @@ function DocBrowser() {
                     <span className="md:hidden relative z-10 pl-10 font-mono text-[13px] font-medium text-zinc-900 tracking-widest">
                       {item.year}
                     </span>
-                    <div className="hidden md:block absolute left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-zinc-900" />
-                    <div className="md:hidden absolute left-4 -translate-x-1/2 w-2 h-2 rounded-full bg-zinc-900" />
                   </div>
                 )
               }
