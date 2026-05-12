@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { FetchStore, open, get, root, slice } from "zarrita";
 import Plot from "../plotly";

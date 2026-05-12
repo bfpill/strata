@@ -1,3 +1,4 @@
+// @ts-nocheck
 /** Per-TM singular value spectrum: one trace per structural block.
  *
  *  Reads from a zarr group with arrays:

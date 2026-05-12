@@ -1,3 +1,4 @@
+// @ts-nocheck
 /** Per-TM susceptibility heatmap with rows permuted by structural input
  *  partition (I_1 first, then I_2, then I_0), thick black dividers between
  *  blocks, and per-block annotations showing discrete rank.

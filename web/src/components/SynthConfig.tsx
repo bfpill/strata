@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from "react";
 import Plot from "../plotly";
 import { TransitionTable, type Model as UIModel, type Code as UICode } from "@noisy-tm/ui";

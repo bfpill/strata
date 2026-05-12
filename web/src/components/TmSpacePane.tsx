@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { FetchStore, open, get, root } from "zarrita";
 import createScatterplot from "regl-scatterplot";

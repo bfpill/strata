@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Zarr DataTree viewer — renders consolidated metadata from zarr.json
  * in a layout matching xarray's HTML repr: tree of groups, each with

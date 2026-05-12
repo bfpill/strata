@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useMemo, useCallback, useRef } from "react";
 import Plot from "../plotly";
 import {

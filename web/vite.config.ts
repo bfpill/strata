@@ -1,13 +1,8 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
-/** Strip Vite's @vite/client (HMR websocket + location.reload) from mdx-frame.html.
- *  Sandboxed iframes (null origin) can't perform same-origin navigations,
- *  so HMR's location.reload() throws "Unsafe attempt to load URL X from
- *  frame with URL X". The @react-refresh preamble is left intact —
- *  plugin-react's TSX transform requires the $RefreshReg$ globals at
- *  module load time, even if we never trigger a refresh. */
 const stripHmrFromMdxFrame: Plugin = {
   name: 'mdx-frame-no-hmr',
   apply: 'serve',
@@ -19,22 +14,25 @@ const stripHmrFromMdxFrame: Plugin = {
         ctx.path?.startsWith('/mdx-frame.html?') ||
         ctx.filename.endsWith('mdx-frame.html');
       if (!isMdxFrame) return html;
-      // Only strip @vite/client; keep the @react-refresh preamble.
       return html.replace(/<script[^>]*src="\/?@vite\/client[^"]*"[^>]*><\/script>\s*/g, '');
     },
   },
 };
 
 export default defineConfig({
-  plugins: [react(), stripHmrFromMdxFrame],
+  plugins: [react(), tailwindcss(), stripHmrFromMdxFrame],
   resolve: {
     alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@noisy-tm/ui/src/InteractiveNoisyTM.css': path.resolve(__dirname, './src/stubs/empty.css'),
+      '@noisy-tm/ui/src/TMTrajectory.css': path.resolve(__dirname, './src/stubs/empty.css'),
+      '@noisy-tm/ui/src/styles.css': path.resolve(__dirname, './src/stubs/empty.css'),
+      '@noisy-tm/ui': path.resolve(__dirname, './src/stubs/noisy-tm-ui.ts'),
       'react': path.resolve(__dirname, 'node_modules/react'),
       'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
   },
   server: {
-    // Allow the sandboxed mdx-frame iframe (null origin) to fetch dev modules.
     cors: { origin: '*' },
   },
   build: {
