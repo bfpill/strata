@@ -252,6 +252,12 @@ export function Feed() {
           <div
             style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
           >
+            <Link to="/catalog" className="btn-small">
+              Components
+            </Link>
+            <Link to="/doc" className="btn-small">
+              Docs
+            </Link>
             <Link to="/trash" className="btn-small">
               Trash
             </Link>

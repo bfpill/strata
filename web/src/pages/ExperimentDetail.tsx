@@ -53,6 +53,36 @@ import {
   type Comment,
   type Artifact,
 } from "../api";
+import { LiveDoc } from "../components/core/content/LiveDoc";
+import db from "../lib/db";
+
+function ExperimentDoc({ slug }: { slug: string }) {
+  const { data, isLoading } = db.useQuery({ draftPosts: { $: { where: { slug } } } });
+  const hasDoc = !isLoading && (data?.draftPosts?.length ?? 0) > 0;
+
+  return (
+    <div>
+      <h4 style={{ fontSize: "0.8rem", fontWeight: 600, color: "#374151", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        Document
+      </h4>
+      {isLoading ? (
+        <div className="meta" style={{ fontSize: "0.8rem" }}>Loading...</div>
+      ) : hasDoc ? (
+        <div style={{ fontSize: "0.85rem" }}>
+          <LiveDoc slug={slug} />
+        </div>
+      ) : (
+        <div className="meta" style={{ fontSize: "0.8rem" }}>
+          <p style={{ marginBottom: "0.5rem" }}>No linked document yet.</p>
+          <p style={{ color: "#9ca3af", lineHeight: 1.5 }}>
+            Create a Google Doc with <code style={{ background: "#f3f4f6", padding: "0.1rem 0.3rem", borderRadius: "3px", fontSize: "0.75rem" }}>slug: {slug}</code> at
+            the top, then sync it to see live content here with embedded components.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function parseTags(tags: string): string[] {
   try {
@@ -217,7 +247,7 @@ function artifactVersion(a: { content_hash?: string | null; updated_at?: string 
   return a.content_hash || a.updated_at || undefined;
 }
 
-type SidebarTab = "experiment" | "synth" | "notes";
+type SidebarTab = "experiment" | "synth" | "notes" | "doc";
 
 // --- Artifact family logic ---
 
@@ -1159,6 +1189,12 @@ export function ExperimentDetail() {
                 >
                   Notes
                 </button>
+                <button
+                  className={`sidebar-tab ${sidebarTab === "doc" ? "active" : ""}`}
+                  onClick={() => setSidebarTab("doc")}
+                >
+                  Doc
+                </button>
               </div>
 
               <div className="sidebar-content">
@@ -1792,6 +1828,9 @@ export function ExperimentDetail() {
                       )}
                     </div>
                   </>
+                )}
+                {sidebarTab === "doc" && (
+                  <ExperimentDoc slug={exp.slug} />
                 )}
               </div>
             </div>
