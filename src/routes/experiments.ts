@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { ulid } from "ulid";
 import { authMiddleware, type AppEnv } from "../middleware";
 import type { Env } from "../types";
+import { getInstantDB, id as instantId } from "../instant";
 
 // --- Slug generation ---
 
@@ -406,6 +407,30 @@ experimentsRouter.post("/create", authMiddleware, async (c) => {
     actor,
   ).run();
 
+  // Dual-write to InstantDB
+  const idb = getInstantDB(c.env);
+  if (idb) {
+    try {
+      await idb.transact(
+        idb.tx.experiments[instantId()].update({
+          slug,
+          title: body.title,
+          group: body.group || "",
+          kind: body.kind || "single",
+          tags: body.tags || [],
+          status: "active",
+          visibility: "public",
+          intent: body.intent || "",
+          createdAt: Date.now(),
+          createdBy: actor,
+          synthProbUri: body.synth_prob ? `experiments/${slug}/synth_prob.json` : "",
+        })
+      );
+    } catch (e) {
+      console.error("[InstantDB] experiment create failed:", e);
+    }
+  }
+
   return c.json(
     {
       experiment_id: experimentId,
@@ -437,6 +462,29 @@ experimentsRouter.post("/:id/runs/create", authMiddleware, async (c) => {
     `INSERT INTO runs (run_id, experiment_id, run_index, status, label, started_at)
      VALUES (?, ?, ?, 'initialised', ?, ?)`,
   ).bind(runId, resolved.experiment_id, runIndex, body.label || null, now).run();
+
+  // Dual-write to InstantDB
+  const idb = getInstantDB(c.env);
+  if (idb) {
+    try {
+      const runInstantId = instantId();
+      // Find the experiment in InstantDB by slug to link
+      const { experiments } = await idb.query({ experiments: { $: { where: { slug: resolved.slug } } } });
+      const expNode = experiments?.[0];
+      if (expNode) {
+        await idb.transact(
+          idb.tx.runs[runInstantId].update({
+            runIndex,
+            status: "initialised",
+            label: body.label || "",
+            startedAt: Date.now(),
+          }).link({ experiment: expNode.id })
+        );
+      }
+    } catch (e) {
+      console.error("[InstantDB] run create failed:", e);
+    }
+  }
 
   return c.json(
     {
@@ -726,6 +774,32 @@ experimentsRouter.put(
       params: body.params,
       now: new Date().toISOString(),
     });
+
+    // Dual-write to InstantDB
+    const idb = getInstantDB(c.env);
+    if (idb) {
+      try {
+        const { experiments } = await idb.query({ experiments: { $: { where: { slug: resolved.slug } }, runs: {} } });
+        const expNode = experiments?.[0];
+        const runNode = (expNode as any)?.runs?.find((r: any) => r.runIndex === runIndex);
+        if (runNode) {
+          const artId = instantId();
+          await idb.transact(
+            idb.tx.artifacts[artId].update({
+              artifactType: body.artifact_type || "unknown",
+              label: body.label ?? "",
+              uri: body.uri,
+              contentHash: body.content_hash ?? null,
+              sizeBytes: body.size_bytes ?? null,
+              params: body.params ?? null,
+              createdAt: Date.now(),
+            }).link({ run: runNode.id })
+          );
+        }
+      } catch (e) {
+        console.error("[InstantDB] artifact upsert failed:", e);
+      }
+    }
 
     return c.json(
       {

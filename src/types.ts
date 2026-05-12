@@ -5,5 +5,7 @@ export interface Env {
   STRATA_API_KEY: string;
   R2_ACCESS_KEY_ID: string;
   R2_SECRET_ACCESS_KEY: string;
+  INSTANT_APP_ID: string;
+  INSTANT_ADMIN_TOKEN: string;
   ENVIRONMENT: string;
 }
