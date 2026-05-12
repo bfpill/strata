@@ -54,21 +54,29 @@ import {
   type Artifact,
 } from "../api";
 import { LiveDoc } from "../components/core/content/LiveDoc";
+import db from "../lib/db";
 
 function ExperimentDoc({ experiment }: { experiment: Experiment }) {
   const docSlugs: string[] = (() => {
     try { return experiment.doc_slugs ? JSON.parse(experiment.doc_slugs) : []; }
     catch { return []; }
   })();
-  const [newSlug, setNewSlug] = useState("");
   const [saving, setSaving] = useState(false);
+  const [manualSlug, setManualSlug] = useState("");
+  const [showManual, setShowManual] = useState(false);
 
   const isAuthed = !!getAuth();
+
+  // Fetch all available docs from InstantDB
+  const { data: docsData } = db.useQuery({ draftPosts: {} });
+  const availableDocs = (docsData?.draftPosts ?? [])
+    .filter((d: { slug: string }) => !docSlugs.includes(d.slug))
+    .sort((a: { updatedAt?: number }, b: { updatedAt?: number }) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 
   const updateSlugs = async (slugs: string[]) => {
     setSaving(true);
     try {
-      await updateExperiment(experiment.slug, { doc_slugs: slugs } as any);
+      await updateExperiment(experiment.slug, { doc_slugs: slugs });
       experiment.doc_slugs = JSON.stringify(slugs);
     } catch (e: any) {
       alert(e.message);
@@ -76,11 +84,12 @@ function ExperimentDoc({ experiment }: { experiment: Experiment }) {
     setSaving(false);
   };
 
-  const addSlug = async () => {
-    const s = newSlug.trim();
-    if (!s || docSlugs.includes(s)) return;
-    await updateSlugs([...docSlugs, s]);
-    setNewSlug("");
+  const addSlug = async (s: string) => {
+    const trimmed = s.trim();
+    if (!trimmed || docSlugs.includes(trimmed)) return;
+    await updateSlugs([...docSlugs, trimmed]);
+    setManualSlug("");
+    setShowManual(false);
   };
 
   const removeSlug = async (s: string) => {
@@ -95,11 +104,7 @@ function ExperimentDoc({ experiment }: { experiment: Experiment }) {
 
       {docSlugs.length === 0 && (
         <div className="meta" style={{ fontSize: "0.8rem", marginBottom: "0.75rem" }}>
-          <p style={{ color: "#9ca3af", lineHeight: 1.5 }}>
-            No documents linked yet. Add a Google Doc slug below, or create a doc with{" "}
-            <code style={{ background: "#f3f4f6", padding: "0.1rem 0.3rem", borderRadius: "3px", fontSize: "0.75rem" }}>slug: {experiment.slug}</code>{" "}
-            at the top.
-          </p>
+          <p style={{ color: "#9ca3af", lineHeight: 1.5 }}>No documents linked yet.</p>
         </div>
       )}
 
@@ -120,18 +125,52 @@ function ExperimentDoc({ experiment }: { experiment: Experiment }) {
       ))}
 
       {isAuthed && (
-        <form onSubmit={e => { e.preventDefault(); addSlug(); }} style={{ display: "flex", gap: "0.4rem", marginTop: "0.5rem" }}>
-          <input
-            value={newSlug}
-            onChange={e => setNewSlug(e.target.value)}
-            placeholder="Doc slug to link..."
-            className="search-input"
-            style={{ fontSize: "0.8rem" }}
-          />
-          <button type="submit" disabled={saving || !newSlug.trim()} className="btn-small">
-            {saving ? "..." : "Add"}
-          </button>
-        </form>
+        <div style={{ marginTop: "0.5rem" }}>
+          {availableDocs.length > 0 && (
+            <div style={{ marginBottom: "0.5rem" }}>
+              <div style={{ fontSize: "0.7rem", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", marginBottom: "0.3rem" }}>
+                Available docs
+              </div>
+              <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: "6px" }}>
+                {availableDocs.map((d: { slug: string; title: string; updatedAt?: number }) => (
+                  <button
+                    key={d.slug}
+                    onClick={() => addSlug(d.slug)}
+                    disabled={saving}
+                    style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      width: "100%", padding: "0.4rem 0.6rem", border: "none", borderBottom: "1px solid #f3f4f6",
+                      background: "white", cursor: "pointer", fontSize: "0.8rem", textAlign: "left",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "white")}
+                  >
+                    <span style={{ color: "#374151" }}>{d.title || d.slug}</span>
+                    <span style={{ fontSize: "0.7rem", color: "#9ca3af", fontFamily: "monospace" }}>{d.slug}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {showManual ? (
+            <form onSubmit={e => { e.preventDefault(); addSlug(manualSlug); }} style={{ display: "flex", gap: "0.4rem" }}>
+              <input
+                value={manualSlug}
+                onChange={e => setManualSlug(e.target.value)}
+                placeholder="Enter slug manually..."
+                className="search-input"
+                style={{ fontSize: "0.8rem" }}
+                autoFocus
+              />
+              <button type="submit" disabled={saving || !manualSlug.trim()} className="btn-small">Add</button>
+              <button type="button" onClick={() => setShowManual(false)} className="btn-small">Cancel</button>
+            </form>
+          ) : (
+            <button onClick={() => setShowManual(true)} className="btn-small" style={{ fontSize: "0.75rem" }}>
+              + Enter slug manually
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
