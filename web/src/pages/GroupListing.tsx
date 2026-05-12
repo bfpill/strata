@@ -32,7 +32,7 @@ export function GroupListing() {
   }, [group]);
 
   return (
-    <div className="container">
+    <div className="container strata">
       <header>
         <h1><Link to="/"><StrataLogo />Strata</Link></h1>
       </header>

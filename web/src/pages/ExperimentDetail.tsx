@@ -982,13 +982,13 @@ export function ExperimentDetail() {
   if (deleted) return <Navigate to="/" replace />;
   if (loading)
     return (
-      <div className="container">
+      <div className="container strata">
         <div className="loading">Loading...</div>
       </div>
     );
   if (error || !exp)
     return (
-      <div className="container">
+      <div className="container strata">
         <div className="error">{error || "Not found"}</div>
       </div>
     );
@@ -1053,7 +1053,7 @@ export function ExperimentDetail() {
     : null;
 
   return (
-    <div className="detail-page">
+    <div className="detail-page strata">
       {/* Tombstoned banner */}
       {exp.status === "tombstoned" && (
         <div

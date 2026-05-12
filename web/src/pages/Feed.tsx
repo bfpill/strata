@@ -234,7 +234,7 @@ export function Feed() {
   const showActivityTimestamp = sort === "activity";
 
   return (
-    <div className="container">
+    <div className="container strata">
       <header>
         <div
           style={{

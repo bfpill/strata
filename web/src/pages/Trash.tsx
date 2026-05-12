@@ -32,7 +32,7 @@ export function Trash() {
   };
 
   return (
-    <div className="container">
+    <div className="container strata">
       <header>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h1><Link to="/"><StrataLogo />Strata</Link></h1>
