@@ -251,8 +251,7 @@ export function GraphView() {
   const [selectedNodes, setSelectedNodes] = useState<GraphNode[]>([]);
   const [showRuns, setShowRuns] = useState(false);
   const [colorByGroup, setColorByGroup] = useState(true);
-
-  // Drag selection state
+  const [selectMode, setSelectMode] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [dragEnd, setDragEnd] = useState<{ x: number; y: number } | null>(null);
   const isDragging = dragStart && dragEnd;
@@ -342,21 +341,16 @@ export function GraphView() {
     setSelectedNodes([]);
   }, []);
 
-  // Handle drag selection on the container
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.shiftKey) {
-      setDragStart({ x: e.clientX, y: e.clientY });
-      setDragEnd(null);
-    }
+  const handleOverlayMouseDown = useCallback((e: React.MouseEvent) => {
+    setDragStart({ x: e.clientX, y: e.clientY });
+    setDragEnd(null);
   }, []);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (dragStart && e.shiftKey) {
-      setDragEnd({ x: e.clientX, y: e.clientY });
-    }
+  const handleOverlayMouseMove = useCallback((e: React.MouseEvent) => {
+    if (dragStart) setDragEnd({ x: e.clientX, y: e.clientY });
   }, [dragStart]);
 
-  const handleMouseUp = useCallback((_e: React.MouseEvent) => {
+  const handleOverlayMouseUp = useCallback(() => {
     if (dragStart && dragEnd && graphRef.current) {
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -375,6 +369,7 @@ export function GraphView() {
       if (selected.length > 0) {
         setSelectedNode(null);
         setSelectedNodes(selected);
+        setSelectMode(false);
       }
     }
     setDragStart(null);
@@ -442,17 +437,24 @@ export function GraphView() {
             </span>
           ))}
           <span style={{ color: "#9ca3af" }}>{graphData.nodes.length} nodes</span>
-          <span style={{ color: "#c4b5fd", fontSize: "0.65rem" }}>Shift+drag to select</span>
+          <button
+            onClick={() => setSelectMode(s => !s)}
+            style={{
+              background: selectMode ? "#2563eb" : "#f3f4f6",
+              color: selectMode ? "white" : "#374151",
+              border: selectMode ? "1px solid #2563eb" : "1px solid #d1d5db",
+              borderRadius: 4, padding: "0.15rem 0.5rem", fontSize: "0.7rem", cursor: "pointer",
+            }}
+          >
+            {selectMode ? "✓ Select" : "⬚ Select"}
+          </button>
         </div>
       </header>
 
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         <div
           ref={containerRef}
-          style={{ flex: 1, position: "relative", cursor: dragStart ? "crosshair" : undefined }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
+          style={{ flex: 1, position: "relative" }}
         >
           {isLoading ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#6b7280" }}>Loading graph...</div>
@@ -478,6 +480,16 @@ export function GraphView() {
             />
           )}
 
+          {/* Select mode overlay */}
+          {selectMode && (
+            <div
+              onMouseDown={handleOverlayMouseDown}
+              onMouseMove={handleOverlayMouseMove}
+              onMouseUp={handleOverlayMouseUp}
+              style={{ position: "absolute", inset: 0, cursor: "crosshair", zIndex: 10 }}
+            />
+          )}
+
           {/* Drag selection box */}
           {isDragging && containerRef.current && (() => {
             const rect = containerRef.current.getBoundingClientRect();
@@ -485,7 +497,7 @@ export function GraphView() {
             const y = Math.min(dragStart.y, dragEnd!.y) - rect.top;
             const w = Math.abs(dragEnd!.x - dragStart.x);
             const h = Math.abs(dragEnd!.y - dragStart.y);
-            return <div style={{ position: "absolute", left: x, top: y, width: w, height: h, border: "2px dashed #3b82f6", background: "rgba(59,130,246,0.08)", pointerEvents: "none" }} />;
+            return <div style={{ position: "absolute", left: x, top: y, width: w, height: h, border: "2px dashed #3b82f6", background: "rgba(59,130,246,0.08)", pointerEvents: "none", zIndex: 11 }} />;
           })()}
 
           {/* Hover tooltip */}
