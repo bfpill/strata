@@ -40,10 +40,14 @@ function ArtifactPreview({ artifact }: { artifact: Artifact }) {
   if (!url) return <div style={{ color: "#9ca3af", fontSize: "0.7rem", fontFamily: "monospace" }}>{artifact.uri.split("/").pop()}</div>;
 
   if (artifact.artifact_type === "png" || artifact.artifact_type === "image") {
-    return <img src={url} alt={artifact.label || ""} style={{ width: "100%", borderRadius: 4, border: "1px solid #e5e7eb" }} loading="lazy" />;
+    return <img src={url} alt={artifact.label || ""} style={{ width: "100%", height: "auto", borderRadius: 4, border: "1px solid #e5e7eb", objectFit: "contain" }} loading="lazy" />;
   }
 
-  return <iframe src={url} style={{ width: "100%", height: 250, border: "1px solid #e5e7eb", borderRadius: 4 }} loading="lazy" />;
+  return (
+    <div style={{ position: "relative", width: "100%", paddingBottom: "62%", borderRadius: 4, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+      <iframe src={url} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }} loading="lazy" />
+    </div>
+  );
 }
 
 // ── Node Panel ──────────────────────────────────────────────
@@ -199,29 +203,112 @@ function NodePanel({ node, onClose, onFullscreen }: {
 
 // ── Selection Panel ─────────────────────────────────────────
 
+function ExpandableExperiment({ node }: { node: GraphNode }) {
+  const [expanded, setExpanded] = useState(false);
+  const [exp, setExp] = useState<Experiment | null>(null);
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showPreviews, setShowPreviews] = useState(false);
+
+  useEffect(() => {
+    if (!expanded || !node.slug || exp) return;
+    setLoading(true);
+    Promise.all([
+      getExperiment(node.slug).catch(() => null),
+      getExperimentRuns(node.slug).catch(() => ({ runs: [] })),
+      getExperimentArtifacts(node.slug).catch(() => ({ artifacts: [] })),
+    ]).then(([e, r, a]) => { setExp(e); setRuns(r.runs); setArtifacts(a.artifacts); setLoading(false); });
+  }, [expanded, node.slug]);
+
+  const previewable = useMemo(() => artifacts.filter(a => artifactPreviewUrl(a) !== null), [artifacts]);
+
+  return (
+    <div style={{ borderBottom: "1px solid #e5e7eb", marginBottom: "0.25rem" }}>
+      <div onClick={() => setExpanded(!expanded)} style={{ padding: "0.35rem 0", display: "flex", alignItems: "center", gap: "0.3rem", cursor: "pointer" }}>
+        <span style={{ fontSize: "0.6rem", color: "#9ca3af", width: "1.2em" }}>{expanded ? "▼" : "▶"}</span>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: node.color, flexShrink: 0 }} />
+        <span style={{ color: "#374151", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "0.78rem" }}>{node.label}</span>
+        {node.group && <span style={{ fontSize: "0.6rem", color: "#9ca3af" }}>{node.group}</span>}
+      </div>
+
+      {expanded && (
+        <div style={{ paddingLeft: "1.2rem", paddingBottom: "0.5rem", fontSize: "0.75rem" }}>
+          {loading && <div style={{ color: "#6b7280" }}>Loading...</div>}
+          {exp && !loading && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+              <div style={{ fontFamily: "monospace", fontSize: "0.65rem", color: "#9ca3af" }}>{exp.slug}</div>
+              <div style={{ display: "flex", gap: "0.5rem", fontSize: "0.7rem", color: "#6b7280" }}>
+                <span>{runs.length} runs</span> · <span>{artifacts.length} artifacts</span> · <span>{exp.created_by}</span>
+              </div>
+
+              {exp.tags && parseTags(exp.tags).length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.15rem" }}>
+                  {parseTags(exp.tags).map(t => <span key={t} style={{ background: "#eff6ff", color: "#2563eb", fontSize: "0.6rem", padding: "0.06rem 0.3rem", borderRadius: 9999 }}>{t}</span>)}
+                </div>
+              )}
+
+              {exp.intent && <div style={{ color: "#374151", fontSize: "0.72rem", lineHeight: 1.3, borderLeft: "2px solid #e5e7eb", paddingLeft: "0.4rem" }}>{exp.intent}</div>}
+
+              {/* Runs summary */}
+              {runs.length > 0 && (
+                <div>
+                  <div style={{ color: "#6b7280", fontSize: "0.65rem", fontWeight: 600, marginBottom: "0.15rem" }}>Runs</div>
+                  {runs.slice(0, 5).map(r => {
+                    const hp = parseHparams(r.hparams_json);
+                    const keys = hp ? Object.entries(hp).slice(0, 4).map(([k, v]) => `${k}=${typeof v === "object" ? "..." : v}`).join(", ") : "";
+                    return (
+                      <div key={r.run_id} style={{ fontSize: "0.68rem", color: "#374151", padding: "0.1rem 0" }}>
+                        <span style={{ color: "#9ca3af" }}>#{r.run_index}</span> {r.label || ""} {keys && <span style={{ color: "#9ca3af" }}>({keys})</span>}
+                      </div>
+                    );
+                  })}
+                  {runs.length > 5 && <div style={{ fontSize: "0.65rem", color: "#9ca3af" }}>+{runs.length - 5} more</div>}
+                </div>
+              )}
+
+              {/* Artifact previews */}
+              {previewable.length > 0 && (
+                <div>
+                  <button onClick={() => setShowPreviews(!showPreviews)} style={{ background: "none", border: "1px solid #d1d5db", borderRadius: 3, padding: "0.08rem 0.35rem", fontSize: "0.62rem", cursor: "pointer", color: "#374151" }}>
+                    {showPreviews ? "Hide previews" : `Show ${previewable.length} previews`}
+                  </button>
+                  {showPreviews && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginTop: "0.3rem" }}>
+                      {previewable.slice(0, 10).map((art, i) => (
+                        <div key={art.artifact_id || i}>
+                          <div style={{ fontSize: "0.62rem", color: "#6b7280", marginBottom: "0.1rem" }}>{art.label || art.artifact_type}</div>
+                          <ArtifactPreview artifact={art} />
+                        </div>
+                      ))}
+                      {previewable.length > 10 && <div style={{ fontSize: "0.62rem", color: "#9ca3af" }}>+{previewable.length - 10} more</div>}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SelectionPanel({ nodes, onClose }: { nodes: GraphNode[]; onClose: () => void }) {
   const exps = nodes.filter(n => n.type === "experiment");
   const groups = [...new Set(exps.map(e => e.group).filter(Boolean))];
   return (
-    <div style={{ width: 400, borderLeft: "1px solid #e5e7eb", background: "white", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div style={{ width: 450, borderLeft: "1px solid #e5e7eb", background: "white", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <div style={{ padding: "0.5rem 0.75rem", borderBottom: "1px solid #e5e7eb", display: "flex", alignItems: "center" }}>
         <span style={{ fontSize: "0.85rem", fontWeight: 600, flex: 1 }}>Selected {nodes.length} nodes</span>
         <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "1rem", cursor: "pointer", color: "#9ca3af" }}>×</button>
       </div>
       <div style={{ flex: 1, overflowY: "auto", padding: "0.75rem", fontSize: "0.78rem" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.75rem", marginBottom: "0.5rem" }}>
-          <tbody>
-            <tr><td style={{ color: "#6b7280", padding: "0.1rem 0.3rem 0.1rem 0" }}>Experiments</td><td style={{ fontWeight: 500 }}>{exps.length}</td></tr>
-            {groups.length > 0 && <tr><td style={{ color: "#6b7280", padding: "0.1rem 0.3rem 0.1rem 0" }}>Groups</td><td>{groups.join(", ")}</td></tr>}
-          </tbody>
-        </table>
-        {exps.map(e => (
-          <div key={e.id} style={{ padding: "0.2rem 0", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: e.color, flexShrink: 0 }} />
-            <span style={{ color: "#374151", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.label}</span>
-            {e.group && <span style={{ fontSize: "0.6rem", color: "#9ca3af" }}>{e.group}</span>}
-          </div>
-        ))}
+        <div style={{ display: "flex", gap: "0.5rem", fontSize: "0.72rem", color: "#6b7280", marginBottom: "0.5rem" }}>
+          <span>{exps.length} experiments</span>
+          {groups.length > 0 && <span>· {groups.length} groups</span>}
+        </div>
+        {exps.map(e => <ExpandableExperiment key={e.id} node={e} />)}
       </div>
     </div>
   );
