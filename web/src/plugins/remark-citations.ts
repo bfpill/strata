@@ -53,7 +53,7 @@ export function remarkCitations(options?: { bibEntries?: Map<string, { author?: 
     if (node.type === 'text' && typeof node.value === 'string') {
       const value = node.value;
       const combinedRegex = new RegExp(
-        `(\\(@!${citeKeyPattern}\\))|([\\[\\(]@${citeKeyPattern}(?:\\s*;\\s*@${citeKeyPattern})*[\\]\\)])|(?<![\\w@])@(${citeKeyPattern})(?![\\w-])`,
+        `(\\(@!${citeKeyPattern}\\))|([\\[\\(]@${citeKeyPattern}(?:\\s*;\\s*@${citeKeyPattern})*[\\]\\)])|(?<![\\w@.])@(${citeKeyPattern})(?![\\w@.-])`,
         'g'
       );
       let lastIndex = 0;
