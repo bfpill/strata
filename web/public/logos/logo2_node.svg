@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Concept: Strata that cross at a node singularity (self-intersection) -->
+  <rect width="200" height="200" fill="#fafafa"/>
+
+  <!-- Lower strata: undisturbed -->
+  <path d="M0 180 C50 175, 100 185, 150 178, 200 180" stroke="#bfdbfe" stroke-width="2.5" fill="none"/>
+  <path d="M0 165 C50 160, 100 170, 150 163, 200 165" stroke="#93c5fd" stroke-width="2.5" fill="none"/>
+
+  <!-- Crossing strata: two sheets meet at a node -->
+  <!-- Sheet A: rises from left -->
+  <path d="M0 140 C30 135, 60 120, 80 100 C90 85, 95 70, 100 60 C105 50, 115 40, 130 35 C150 28, 175 30, 200 25" stroke="#3b82f6" stroke-width="3" fill="none"/>
+
+  <!-- Sheet B: rises from right, crosses A -->
+  <path d="M0 25 C25 30, 50 28, 70 35 C85 40, 95 50, 100 60 C105 70, 110 85, 120 100 C140 120, 170 135, 200 140" stroke="#2563eb" stroke-width="3" fill="none"/>
+
+  <!-- Node point where sheets cross -->
+  <circle cx="100" cy="60" r="5" fill="none" stroke="#1e40af" stroke-width="2.5"/>
+  <circle cx="100" cy="60" r="2" fill="#1e40af"/>
+
+  <!-- More undisturbed strata below -->
+  <path d="M0 148 C30 143, 65 155, 100 145 C135 135, 165 148, 200 148" stroke="#60a5fa" stroke-width="2.5" fill="none"/>
+</svg>

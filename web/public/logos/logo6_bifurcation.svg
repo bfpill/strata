@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Concept: Strata bifurcating at a singular point — like a phase transition -->
+  <!-- Geological layers that split at a critical point -->
+  <rect width="200" height="200" fill="#fafafa"/>
+
+  <!-- Single stratum approaches from left, bifurcates at center -->
+  <!-- Pre-bifurcation: merged -->
+  <path d="M0 100 C20 100, 40 98, 60 95 C75 92, 85 90, 95 88" stroke="#1d4ed8" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Post-bifurcation: upper branch -->
+  <path d="M95 88 C105 82, 115 72, 130 60 C150 45, 170 38, 200 35" stroke="#2563eb" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Post-bifurcation: lower branch -->
+  <path d="M95 88 C105 94, 115 108, 130 120 C150 135, 170 142, 200 145" stroke="#60a5fa" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Second stratum, bifurcates slightly later -->
+  <path d="M0 120 C20 120, 40 118, 60 115 C75 112, 90 110, 110 108" stroke="#1d4ed8" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M110 108 C120 102, 135 90, 150 78 C165 66, 180 58, 200 55" stroke="#3b82f6" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M110 108 C120 114, 135 128, 150 138 C165 148, 180 155, 200 160" stroke="#93c5fd" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Third stratum -->
+  <path d="M0 80 C20 80, 40 78, 60 75 C75 72, 90 68, 110 62" stroke="#1d4ed8" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M110 62 C125 55, 140 45, 155 35 C170 28, 185 22, 200 18" stroke="#3b82f6" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M110 62 C125 68, 140 78, 155 85 C170 92, 185 95, 200 95" stroke="#93c5fd" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Bifurcation points -->
+  <circle cx="95" cy="88" r="4" fill="#1e40af"/>
+  <circle cx="110" cy="108" r="3.5" fill="#1e40af"/>
+  <circle cx="110" cy="62" r="3.5" fill="#1e40af"/>
+
+  <!-- Undisturbed base strata -->
+  <path d="M0 160 C50 158, 100 162, 150 158 C200 154, 200 160, 200 160" stroke="#dbeafe" stroke-width="2" fill="none"/>
+  <path d="M0 175 C50 173, 100 177, 150 173 C200 169, 200 175, 200 175" stroke="#eff6ff" stroke-width="2" fill="none"/>
+</svg>

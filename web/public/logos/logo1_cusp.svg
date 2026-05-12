@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Concept: Geological strata with a cusp singularity breaking through -->
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e40af"/>
+      <stop offset="100%" stop-color="#93c5fd"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="200" height="200" fill="#fafafa"/>
+
+  <!-- Strata layers that deform around a singularity -->
+  <!-- Bottom layers: smooth geological -->
+  <path d="M0 170 C30 168, 60 172, 90 165 C120 158, 150 170, 200 168" stroke="#bfdbfe" stroke-width="3" fill="none"/>
+  <path d="M0 150 C25 148, 55 155, 85 145 C115 135, 145 150, 200 148" stroke="#93c5fd" stroke-width="3" fill="none"/>
+  <path d="M0 130 C20 128, 50 138, 80 125 C110 112, 140 130, 200 128" stroke="#60a5fa" stroke-width="3" fill="none"/>
+
+  <!-- Middle layers: start to warp toward singularity -->
+  <path d="M0 110 C20 108, 45 118, 75 100 C90 85, 95 70, 100 55 C105 70, 110 85, 125 100 C155 118, 180 108, 200 108" stroke="#3b82f6" stroke-width="3" fill="none"/>
+  <path d="M0 90 C20 88, 40 98, 70 80 C85 65, 92 45, 100 25 C108 45, 115 65, 130 80 C160 98, 180 88, 200 88" stroke="#2563eb" stroke-width="3" fill="none"/>
+
+  <!-- Top layers: sharp cusp -->
+  <path d="M0 70 C20 68, 35 78, 65 60 C80 45, 90 28, 100 8 C110 28, 120 45, 135 60 C165 78, 180 68, 200 68" stroke="#1d4ed8" stroke-width="3" fill="none"/>
+
+  <!-- Singular point -->
+  <circle cx="100" cy="8" r="4" fill="#1e40af"/>
+</svg>

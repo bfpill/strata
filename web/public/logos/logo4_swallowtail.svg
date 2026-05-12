@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Concept: Swallowtail catastrophe surface cross-section with geological strata feel -->
+  <rect width="200" height="200" fill="#fafafa"/>
+
+  <!-- Smooth lower strata -->
+  <path d="M0 185 C40 182, 80 188, 120 183 C160 178, 200 185, 200 185" stroke="#dbeafe" stroke-width="2" fill="none"/>
+  <path d="M0 170 C40 167, 80 173, 120 168 C160 163, 200 170, 200 170" stroke="#bfdbfe" stroke-width="2" fill="none"/>
+  <path d="M0 155 C40 152, 80 158, 120 150 C160 142, 200 155, 200 155" stroke="#93c5fd" stroke-width="2.5" fill="none"/>
+
+  <!-- Swallowtail fold: strata that fold back on themselves -->
+  <!-- Main stratum -->
+  <path d="M0 130 C20 128, 40 135, 60 120 C75 108, 85 90, 90 75 C93 65, 95 58, 100 55 C105 52, 110 55, 115 65 C120 75, 118 88, 110 95 C102 102, 95 100, 92 90" stroke="#3b82f6" stroke-width="3" fill="none"/>
+  <!-- Continuation after fold -->
+  <path d="M92 90 C90 82, 92 72, 100 55" stroke="#3b82f6" stroke-width="3" fill="none" stroke-dasharray="4 3"/>
+  <!-- Upper continuation -->
+  <path d="M100 55 C108 42, 120 35, 135 32 C155 28, 175 35, 200 30" stroke="#3b82f6" stroke-width="3" fill="none"/>
+
+  <!-- Second folding stratum -->
+  <path d="M0 110 C15 108, 35 115, 55 100 C70 88, 82 68, 90 50 C95 38, 100 30, 110 28 C125 25, 145 30, 165 28 C180 26, 200 20, 200 20" stroke="#1d4ed8" stroke-width="3" fill="none"/>
+
+  <!-- Cusp point of the swallowtail -->
+  <circle cx="100" cy="55" r="4" fill="#1e40af"/>
+  <!-- Secondary cusp -->
+  <circle cx="92" cy="90" r="3" fill="#2563eb"/>
+</svg>

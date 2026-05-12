@@ -1,0 +1,377 @@
+/* Zarr DataTree viewer — adapted from xarray's notebook CSS */
+
+.zarr-tree-view {
+  position: relative;
+  padding: 1rem;
+}
+
+.xr-wrap {
+  display: block;
+  min-width: 300px;
+  max-width: 800px;
+  line-height: 1.6;
+  padding-bottom: 4px;
+  font-size: 13px;
+}
+
+.xr-header {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-bottom: solid 1px #d1d5db;
+  margin-bottom: 4px;
+}
+
+.xr-header > div,
+.xr-header > ul {
+  display: inline;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.xr-obj-type,
+.xr-obj-name {
+  margin-left: 2px;
+  margin-right: 10px;
+}
+
+.xr-obj-type,
+.xr-group-box-contents > label {
+  color: #6b7280;
+  display: block;
+}
+
+.xr-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto 1fr 0 20px 0 20px;
+  margin-block-start: 0;
+  margin-block-end: 0;
+  list-style: none;
+}
+
+.xr-section-item {
+  display: contents;
+}
+
+.xr-section-item > input,
+.xr-group-box-contents > input {
+  display: block;
+  opacity: 0;
+  height: 0;
+  margin: 0;
+}
+
+.xr-section-item > input + label {
+  color: #9ca3af;
+}
+
+.xr-section-item > input:enabled + label,
+.xr-group-box-contents > input:enabled + label {
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.xr-section-item > input:enabled + label:hover,
+.xr-group-box-contents > input:enabled + label:hover {
+  color: #111827;
+}
+
+.xr-section-summary {
+  grid-column: 1;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.xr-section-summary > span {
+  display: inline-block;
+  padding-left: 0.3em;
+}
+
+.xr-group-box-contents > input:checked + label > span {
+  display: inline-block;
+  padding-left: 0.6em;
+}
+
+.xr-section-summary-in + label::before {
+  display: inline-block;
+  content: "\25b6";
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.xr-section-summary-in:disabled + label::before {
+  color: #d1d5db;
+}
+
+.xr-section-summary-in:checked + label::before {
+  content: "\25bc";
+}
+
+.xr-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.xr-section-summary,
+.xr-section-inline-details,
+.xr-group-box-contents > label {
+  padding-top: 4px;
+}
+
+.xr-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.xr-section-details {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  margin-bottom: 5px;
+}
+
+.xr-section-summary-in ~ .xr-section-details {
+  display: none;
+}
+
+.xr-section-summary-in:checked ~ .xr-section-details {
+  display: contents;
+}
+
+.xr-children {
+  display: inline-grid;
+  grid-template-columns: 100%;
+  grid-column: 1 / -1;
+  padding-top: 4px;
+}
+
+.xr-group-box {
+  display: inline-grid;
+  grid-template-columns: 0px 30px auto;
+}
+
+.xr-group-box-vline {
+  grid-column-start: 1;
+  border-right: 0.2em solid #d1d5db;
+  width: 0px;
+}
+
+.xr-group-box-hline {
+  grid-column-start: 2;
+  grid-row-start: 1;
+  height: 1em;
+  width: 26px;
+  border-bottom: 0.2em solid #d1d5db;
+}
+
+.xr-group-box-contents {
+  grid-column-start: 3;
+  padding-bottom: 4px;
+}
+
+.xr-group-box-contents > label::before {
+  content: "\1f4c2";
+  padding-right: 0.3em;
+}
+
+.xr-group-box-contents > input:checked + label::before {
+  content: "\1f4c1";
+}
+
+.xr-group-box-contents > input:checked + label {
+  padding-bottom: 0px;
+}
+
+.xr-group-box-contents > input + label > span {
+  display: none;
+}
+
+.xr-group-box-contents > input:checked ~ .xr-sections {
+  display: none;
+}
+
+.xr-dim-list {
+  display: inline-block !important;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0;
+}
+
+.xr-dim-list li {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.xr-dim-list::before {
+  content: "(";
+}
+
+.xr-dim-list::after {
+  content: ")";
+}
+
+.xr-dim-list li:not(:last-child)::after {
+  content: ",";
+  padding-right: 5px;
+}
+
+.xr-has-index {
+  font-weight: bold;
+}
+
+.xr-var-list,
+.xr-var-item {
+  display: contents;
+  list-style: none;
+}
+
+.xr-var-item > div,
+.xr-var-item label,
+.xr-var-item > .xr-var-name span {
+  background-color: #f9fafb;
+  border-color: #f3f4f6;
+  margin-bottom: 0;
+  padding-top: 2px;
+}
+
+.xr-var-item > .xr-var-name:hover span {
+  padding-right: 5px;
+}
+
+.xr-var-list > li:nth-child(odd) > div,
+.xr-var-list > li:nth-child(odd) > label,
+.xr-var-list > li:nth-child(odd) > .xr-var-name span {
+  background-color: #f3f4f6;
+  border-color: #f9fafb;
+}
+
+.xr-var-name {
+  grid-column: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 2px;
+}
+
+.xr-var-dims {
+  grid-column: 2;
+  white-space: nowrap;
+  padding-left: 5px;
+  color: #9ca3af;
+}
+
+.xr-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: #6b7280;
+  padding-right: 8px;
+}
+
+.xr-var-preview {
+  grid-column: 4;
+}
+
+.xr-preview {
+  color: #9ca3af;
+}
+
+.xr-var-attrs-in,
+.xr-var-data-in {
+  display: block;
+  opacity: 0;
+  height: 0;
+  margin: 0;
+}
+
+.xr-var-attrs-in + label,
+.xr-var-data-in + label {
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.xr-var-attrs-in:disabled + label,
+.xr-var-data-in:disabled + label {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.xr-var-attrs-in:enabled + label:hover,
+.xr-var-data-in:enabled + label:hover {
+  color: #111827;
+}
+
+.xr-var-attrs {
+  display: none;
+  grid-column: 1 / -1;
+}
+
+.xr-var-data {
+  grid-column: 1 / -1;
+}
+
+.xr-var-attrs-in:checked ~ .xr-var-attrs {
+  display: block;
+}
+
+.xr-data-preview {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  color: #374151;
+  background: #f9fafb;
+  padding: 4px 8px;
+  margin: 2px 0;
+  border-radius: 3px;
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.xr-attrs {
+  padding: 0;
+  margin: 0;
+  grid-column: 1 / -1;
+}
+
+.xr-attrs dt {
+  font-weight: normal;
+  grid-column: 1;
+  display: inline;
+}
+
+.xr-attrs dd {
+  grid-column: 2;
+  white-space: pre-wrap;
+  word-break: break-all;
+  display: inline;
+  margin-left: 0.5em;
+}
+
+.xr-attr-row {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.xr-attr-json {
+  grid-column: 1 / -1;
+  width: 120ch;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  color: #374151;
+  background: #f9fafb;
+  padding: 6px 10px;
+  margin: 4px 0;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.icon {
+  width: 12px;
+  height: 12px;
+  vertical-align: middle;
+  fill: currentColor;
+}

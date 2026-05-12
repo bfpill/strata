@@ -1,0 +1,37 @@
+// Strata — AIXI Experiment Tracker
+// https://developers.cloudflare.com/workers/wrangler/configuration/
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "strata",
+  "main": "src/index.ts",
+  "account_id": "d00038c6596061598646a3726dd77a60",
+  "compatibility_date": "2025-03-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // D1 database binding
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "strata-db",
+      "database_id": "5e975b9e-9a2c-4af1-ba83-e9a6bfce1090"
+    }
+  ],
+
+  // R2 bucket binding
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "aixi"
+    }
+  ],
+
+  // Environment variables (secrets set via `wrangler secret put`)
+  "vars": {
+    "ENVIRONMENT": "development"
+  }
+
+  // Secrets (set via CLI, not checked in):
+  //   STRATA_API_KEY — shared API key for authenticated writes
+  //   R2_ACCESS_KEY_ID — parent R2 token for minting temp credentials
+  //   R2_SECRET_ACCESS_KEY — parent R2 secret
+}

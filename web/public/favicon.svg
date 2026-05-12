@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Concept: Compact icon version — strata lines warping toward a singular point -->
+  <!-- Good for small logo / favicon -->
+  <rect width="200" height="200" fill="#fafafa" rx="16"/>
+
+  <!-- Geological strata that all curve toward a singular point -->
+  <path d="M15 170 C45 165, 75 168, 100 150 C115 140, 125 125, 130 108" stroke="#bfdbfe" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M15 140 C40 135, 65 140, 90 125 C110 112, 120 98, 130 108" stroke="#93c5fd" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M15 110 C35 105, 55 115, 80 100 C100 88, 115 80, 130 108" stroke="#60a5fa" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M15 80 C30 78, 50 88, 70 75 C90 62, 110 55, 130 108" stroke="#3b82f6" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M15 50 C28 50, 45 60, 60 52 C80 40, 105 35, 130 108" stroke="#2563eb" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M15 25 C25 28, 40 35, 55 30 C75 22, 100 20, 130 108" stroke="#1d4ed8" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Singular point where all strata converge -->
+  <circle cx="130" cy="108" r="6" fill="#1e40af"/>
+  <circle cx="130" cy="108" r="3" fill="white"/>
+</svg>

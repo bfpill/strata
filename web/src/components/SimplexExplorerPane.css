@@ -1,0 +1,144 @@
+.simplex-explorer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.simplex-explorer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.simplex-explorer-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.simplex-explorer-control-group > label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.simplex-explorer-control-group select,
+.simplex-explorer-control-group input[type="number"] {
+  font-size: 0.85rem;
+  padding: 3px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+}
+
+.simplex-explorer-step-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.simplex-explorer-step-group input[type="range"] {
+  width: 100%;
+}
+
+.simplex-explorer-chain-invalid {
+  font-size: 0.75rem;
+  color: #dc2626;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.simplex-explorer-error {
+  padding: 1rem;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.simplex-explorer-loading {
+  padding: 2rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+.simplex-explorer-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+  position: relative;
+}
+
+.simplex-explorer-left {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.simplex-explorer-resize {
+  width: 4px;
+  cursor: col-resize;
+  background: #e5e7eb;
+  flex-shrink: 0;
+}
+
+.simplex-explorer-resize:hover,
+.simplex-explorer-resize:active {
+  background: #2563eb;
+  opacity: 0.5;
+}
+
+.simplex-explorer-simplex {
+  overflow-x: auto;
+}
+
+.simplex-explorer-trajectory-section {
+  margin-top: 8px;
+}
+
+.simplex-explorer-trajectory-section > summary {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.simplex-explorer-trajectory {
+  overflow-x: auto;
+  padding-top: 4px;
+}
+
+.simplex-explorer-right {
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.simplex-explorer-chart {
+  flex-shrink: 0;
+}
+
+/* Responsive: stack on narrow screens */
+@media (max-width: 900px) {
+  .simplex-explorer-content {
+    flex-direction: column;
+  }
+  .simplex-explorer-left {
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .simplex-explorer-right {
+    width: 100%;
+  }
+}

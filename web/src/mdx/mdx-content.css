@@ -1,0 +1,29 @@
+/* Shared typography for rendered MDX content (used by inline mode).
+   The sandboxed iframe entry has its own copy of these rules inline in
+   mdx-frame.html so it can stay self-contained. */
+.mdx-content > :first-child { margin-top: 0; }
+.mdx-content h1, .mdx-content h2, .mdx-content h3,
+.mdx-content h4, .mdx-content h5, .mdx-content h6 {
+  font-weight: 600; line-height: 1.25; margin: 1.4em 0 0.5em;
+}
+.mdx-content h1 { font-size: 1.6rem; }
+.mdx-content h2 { font-size: 1.35rem; }
+.mdx-content h3 { font-size: 1.15rem; }
+.mdx-content h4 { font-size: 1.0rem; }
+.mdx-content p, .mdx-content ul, .mdx-content ol { margin: 0.5em 0; }
+.mdx-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em; background: #f3f4f6; padding: 0.1em 0.3em; border-radius: 3px;
+}
+.mdx-content pre { background: #f3f4f6; padding: 0.75rem; border-radius: 4px; overflow-x: auto; }
+.mdx-content pre code { background: transparent; padding: 0; }
+.mdx-content blockquote {
+  border-left: 3px solid #d1d5db; padding-left: 0.75rem; color: #4b5563; margin: 0.5em 0;
+}
+.mdx-content table { border-collapse: collapse; margin: 0.75em 0; }
+.mdx-content th, .mdx-content td {
+  border: 1px solid #e5e7eb; padding: 0.35em 0.6em; text-align: left;
+}
+.mdx-content th { background: #f9fafb; font-weight: 600; }
+.mdx-content a { color: #2563eb; text-decoration: none; }
+.mdx-content a:hover { text-decoration: underline; }
