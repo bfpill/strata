@@ -125,50 +125,32 @@ function ExperimentDoc({ experiment }: { experiment: Experiment }) {
       ))}
 
       {isAuthed && (
-        <div style={{ marginTop: "0.5rem" }}>
-          {availableDocs.length > 0 && (
-            <div style={{ marginBottom: "0.5rem" }}>
-              <div style={{ fontSize: "0.7rem", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", marginBottom: "0.3rem" }}>
-                Available docs
-              </div>
-              <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: "6px" }}>
-                {availableDocs.map((d: { slug: string; title: string; updatedAt?: number }) => (
-                  <button
-                    key={d.slug}
-                    onClick={() => addSlug(d.slug)}
-                    disabled={saving}
-                    style={{
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
-                      width: "100%", padding: "0.4rem 0.6rem", border: "none", borderBottom: "1px solid #f3f4f6",
-                      background: "white", cursor: "pointer", fontSize: "0.8rem", textAlign: "left",
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
-                    onMouseLeave={e => (e.currentTarget.style.background = "white")}
-                  >
-                    <span style={{ color: "#374151" }}>{d.title || d.slug}</span>
-                    <span style={{ fontSize: "0.7rem", color: "#9ca3af", fontFamily: "monospace" }}>{d.slug}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+        <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.5rem" }}>
+          {availableDocs.length > 0 ? (
+            <select
+              value=""
+              onChange={e => { if (e.target.value) addSlug(e.target.value); }}
+              disabled={saving}
+              className="search-input"
+              style={{ fontSize: "0.8rem" }}
+            >
+              <option value="">Link a document...</option>
+              {availableDocs.map((d: { slug: string; title: string }) => (
+                <option key={d.slug} value={d.slug}>{d.title || d.slug}</option>
+              ))}
+            </select>
+          ) : (
+            <span className="meta" style={{ fontSize: "0.8rem" }}>No unlinked docs available</span>
           )}
           {showManual ? (
-            <form onSubmit={e => { e.preventDefault(); addSlug(manualSlug); }} style={{ display: "flex", gap: "0.4rem" }}>
-              <input
-                value={manualSlug}
-                onChange={e => setManualSlug(e.target.value)}
-                placeholder="Enter slug manually..."
-                className="search-input"
-                style={{ fontSize: "0.8rem" }}
-                autoFocus
-              />
+            <form onSubmit={e => { e.preventDefault(); addSlug(manualSlug); }} style={{ display: "flex", gap: "0.3rem" }}>
+              <input value={manualSlug} onChange={e => setManualSlug(e.target.value)} placeholder="slug..."
+                className="search-input" style={{ fontSize: "0.8rem", width: "120px" }} autoFocus />
               <button type="submit" disabled={saving || !manualSlug.trim()} className="btn-small">Add</button>
-              <button type="button" onClick={() => setShowManual(false)} className="btn-small">Cancel</button>
+              <button type="button" onClick={() => setShowManual(false)} className="btn-small">×</button>
             </form>
           ) : (
-            <button onClick={() => setShowManual(true)} className="btn-small" style={{ fontSize: "0.75rem" }}>
-              + Enter slug manually
-            </button>
+            <button onClick={() => setShowManual(true)} className="btn-small" title="Enter slug manually">+</button>
           )}
         </div>
       )}
