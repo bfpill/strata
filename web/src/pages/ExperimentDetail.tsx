@@ -41,7 +41,6 @@ import {
   getExperimentComments,
   getExperimentArtifacts,
   getExperimentManifest,
-  updateNotes,
   addComment,
   updateExperiment,
   deleteExperiment,
@@ -168,68 +167,6 @@ function parseTags(tags: string): string[] {
 
 // --- Subcomponents ---
 
-function NotesEditor({
-  slug,
-  initial,
-  onSaved,
-}: {
-  slug: string;
-  initial: string;
-  onSaved: (notes: string) => void;
-}) {
-  const [text, setText] = useState(initial);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSave = async () => {
-    setSaving(true);
-    setError(null);
-    try {
-      await updateNotes(slug, text);
-      onSaved(text);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div>
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={8}
-        style={{
-          width: "100%",
-          fontFamily: "monospace",
-          fontSize: "0.85rem",
-          padding: "0.75rem",
-          border: "1px solid #d1d5db",
-          borderRadius: "6px",
-          resize: "vertical",
-        }}
-        placeholder="Experiment notes (Markdown)"
-      />
-      <div
-        style={{
-          marginTop: "0.5rem",
-          display: "flex",
-          gap: "0.5rem",
-          alignItems: "center",
-        }}
-      >
-        <button onClick={handleSave} disabled={saving} className="btn">
-          {saving ? "Saving..." : "Save notes"}
-        </button>
-        {error && (
-          <span style={{ color: "#dc2626", fontSize: "0.8rem" }}>{error}</span>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function CommentForm({
   slug,
   onPosted,
@@ -321,7 +258,7 @@ function artifactVersion(a: { content_hash?: string | null; updated_at?: string 
   return a.content_hash || a.updated_at || undefined;
 }
 
-type SidebarTab = "experiment" | "synth" | "notes" | "doc";
+type SidebarTab = "experiment" | "synth";
 
 // --- Artifact family logic ---
 
@@ -763,7 +700,6 @@ export function ExperimentDetail() {
   >({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingNotes, setEditingNotes] = useState(false);
   const [deleted, setDeleted] = useState(false); // redirect after delete
 
   // Inline editing state
@@ -1253,24 +1189,14 @@ export function ExperimentDetail() {
                 >
                   Experiment
                 </button>
-                <button
-                  className={`sidebar-tab ${sidebarTab === "synth" ? "active" : ""}`}
-                  onClick={() => setSidebarTab("synth")}
-                >
-                  Synth
-                </button>
-                <button
-                  className={`sidebar-tab ${sidebarTab === "notes" ? "active" : ""}`}
-                  onClick={() => setSidebarTab("notes")}
-                >
-                  Notes
-                </button>
-                <button
-                  className={`sidebar-tab ${sidebarTab === "doc" ? "active" : ""}`}
-                  onClick={() => setSidebarTab("doc")}
-                >
-                  Doc
-                </button>
+                {synthProb && (
+                  <button
+                    className={`sidebar-tab ${sidebarTab === "synth" ? "active" : ""}`}
+                    onClick={() => setSidebarTab("synth")}
+                  >
+                    Synth
+                  </button>
+                )}
               </div>
 
               <div className="sidebar-content">
@@ -1765,6 +1691,32 @@ export function ExperimentDetail() {
                         )}
                       </div>
                     )}
+
+                    {/* Comments */}
+                    <div style={{ marginTop: "1rem" }}>
+                      <h4 style={{ fontSize: "0.8rem", fontWeight: 600, color: "#374151", marginBottom: "0.25rem" }}>
+                        Comments ({comments.length})
+                      </h4>
+                      {comments.map((c) => (
+                        <div key={c.comment_id} className="comment" style={{ fontSize: "0.85rem" }}>
+                          <div className="comment-meta">
+                            {c.author} &middot; {new Date(c.created_at).toLocaleString()}
+                          </div>
+                          <ReactMarkdown>{c.body_markdown}</ReactMarkdown>
+                        </div>
+                      ))}
+                      {comments.length === 0 && (
+                        <div className="meta" style={{ fontSize: "0.8rem" }}>No comments yet.</div>
+                      )}
+                      {isAuthed && (
+                        <CommentForm slug={exp.slug} onPosted={(c) => setComments([...comments, c])} />
+                      )}
+                      {!isAuthed && (
+                        <div className="meta" style={{ marginTop: "0.5rem", fontSize: "0.8rem" }}>
+                          Set API key in <Link to="/">settings</Link> to post comments.
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
 
@@ -1786,128 +1738,6 @@ export function ExperimentDetail() {
                   </>
                 )}
 
-                {/* Notes tab */}
-                {sidebarTab === "notes" && (
-                  <>
-                    <div style={{ marginBottom: "1rem" }}>
-                      <h4
-                        style={{
-                          fontSize: "0.8rem",
-                          fontWeight: 600,
-                          color: "#374151",
-                          marginBottom: "0.25rem",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                        }}
-                      >
-                        Notes
-                        {isAuthed && !editingNotes && (
-                          <button
-                            onClick={() => setEditingNotes(true)}
-                            className="btn-small"
-                          >
-                            Edit
-                          </button>
-                        )}
-                      </h4>
-                      {editingNotes ? (
-                        <NotesEditor
-                          slug={exp.slug}
-                          initial={exp.notes_markdown || ""}
-                          onSaved={(notes) => {
-                            setExp({ ...exp, notes_markdown: notes });
-                            setEditingNotes(false);
-                          }}
-                        />
-                      ) : exp.notes_markdown ? (
-                        <>
-                          <div
-                            className="notes"
-                            style={{ fontSize: "0.85rem" }}
-                          >
-                            <ReactMarkdown>{exp.notes_markdown}</ReactMarkdown>
-                          </div>
-                          {exp.notes_updated_by && (
-                            <div
-                              className="meta"
-                              style={{
-                                marginTop: "0.25rem",
-                                fontSize: "0.75rem",
-                              }}
-                            >
-                              Updated by {exp.notes_updated_by} &middot;{" "}
-                              {new Date(exp.notes_updated_at!).toLocaleString()}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="meta" style={{ fontSize: "0.8rem" }}>
-                          No notes yet.
-                          {isAuthed && (
-                            <button
-                              onClick={() => setEditingNotes(true)}
-                              className="btn-small"
-                              style={{ marginLeft: "0.5rem" }}
-                            >
-                              Add notes
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Comments */}
-                    <div>
-                      <h4
-                        style={{
-                          fontSize: "0.8rem",
-                          fontWeight: 600,
-                          color: "#374151",
-                          marginBottom: "0.25rem",
-                        }}
-                      >
-                        Comments ({comments.length})
-                      </h4>
-                      {comments.map((c) => (
-                        <div
-                          key={c.comment_id}
-                          className="comment"
-                          style={{ fontSize: "0.85rem" }}
-                        >
-                          <div className="comment-meta">
-                            {c.author} &middot;{" "}
-                            {new Date(c.created_at).toLocaleString()}
-                          </div>
-                          <ReactMarkdown>{c.body_markdown}</ReactMarkdown>
-                        </div>
-                      ))}
-                      {comments.length === 0 && (
-                        <div className="meta" style={{ fontSize: "0.8rem" }}>
-                          No comments yet.
-                        </div>
-                      )}
-                      {isAuthed && (
-                        <CommentForm
-                          slug={exp.slug}
-                          onPosted={(c) => setComments([...comments, c])}
-                        />
-                      )}
-                      {!isAuthed && (
-                        <div
-                          className="meta"
-                          style={{ marginTop: "0.5rem", fontSize: "0.8rem" }}
-                        >
-                          Set API key in <Link to="/">settings</Link> to post
-                          comments.
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-                {sidebarTab === "doc" && (
-                  <ExperimentDoc experiment={exp} />
-                )}
               </div>
             </div>
             <div
