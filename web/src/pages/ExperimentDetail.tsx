@@ -2007,8 +2007,10 @@ export function ExperimentDetail() {
             </div>
           )}
           {mainMode === "doc" && (
-            <div className="artifact-content" style={{ padding: "1.5rem" }}>
-              <ExperimentDoc experiment={exp} />
+            <div className="artifact-content" style={{ padding: "1.5rem", overflowY: "auto" }}>
+              <div style={{ maxWidth: "48rem", margin: "0 auto" }}>
+                <ExperimentDoc experiment={exp} />
+              </div>
             </div>
           )}
         </div>
