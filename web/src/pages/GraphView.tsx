@@ -2,20 +2,13 @@ import { useMemo, useCallback, useRef, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ForceGraph2D from "react-force-graph-2d";
 import db from "../lib/db";
-import {
-  listExperiments,
-  getExperimentRuns,
-  getExperimentArtifacts,
-  type Experiment,
-  type Run,
-  type Artifact,
-} from "../api";
 
 interface GraphNode {
   id: string;
   label: string;
-  type: "experiment" | "run" | "artifact" | "doc";
+  type: "experiment" | "run" | "doc";
   slug?: string;
+  group?: string;
   color: string;
   val: number;
 }
@@ -23,61 +16,35 @@ interface GraphNode {
 interface GraphLink {
   source: string;
   target: string;
-  relation: string;
   color: string;
 }
 
 const NODE_COLORS: Record<string, string> = {
   experiment: "#3b82f6",
   run: "#8b5cf6",
-  artifact: "#f59e0b",
   doc: "#10b981",
 };
+
+const GROUP_COLORS = [
+  "#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6",
+  "#ec4899", "#06b6d4", "#84cc16", "#f97316", "#6366f1",
+];
 
 export function GraphView() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-
-  const [experiments, setExperiments] = useState<Experiment[]>([]);
-  const [runsByExp, setRunsByExp] = useState<Record<string, Run[]>>({});
-  const [artifactsByExp, setArtifactsByExp] = useState<Record<string, Artifact[]>>({});
-  const [loading, setLoading] = useState(true);
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
+  const [showRuns, setShowRuns] = useState(false);
+  const [colorByGroup, setColorByGroup] = useState(true);
 
-  // Load docs from InstantDB
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, isLoading } = db.useQuery({ experiments: { runs: {} } } as any);
   const { data: docsData } = db.useQuery({ draftPosts: {} });
+
+  const experiments = (data as any)?.experiments ?? [];
   const docs = docsData?.draftPosts ?? [];
 
-  // Load experiments from API
-  useEffect(() => {
-    (async () => {
-      try {
-        const result = await listExperiments(100, 0);
-        setExperiments(result.experiments);
-
-        const runsMap: Record<string, Run[]> = {};
-        const artsMap: Record<string, Artifact[]> = {};
-        await Promise.all(
-          result.experiments.map(async (exp) => {
-            try {
-              const [runsRes, artsRes] = await Promise.all([
-                getExperimentRuns(exp.slug),
-                getExperimentArtifacts(exp.slug),
-              ]);
-              runsMap[exp.slug] = runsRes.runs;
-              artsMap[exp.slug] = artsRes.artifacts;
-            } catch {}
-          })
-        );
-        setRunsByExp(runsMap);
-        setArtifactsByExp(artsMap);
-      } catch {}
-      setLoading(false);
-    })();
-  }, []);
-
-  // Resize
   useEffect(() => {
     const measure = () => {
       if (containerRef.current) {
@@ -92,128 +59,87 @@ export function GraphView() {
     return () => window.removeEventListener("resize", measure);
   }, []);
 
+  const groups = useMemo(() => {
+    const set = new Set<string>();
+    experiments.forEach((e: any) => { if (e.group) set.add(e.group); });
+    return [...set].sort();
+  }, [experiments]);
+
+  const groupColor = useCallback((group: string) => {
+    const idx = groups.indexOf(group);
+    return idx >= 0 ? GROUP_COLORS[idx % GROUP_COLORS.length] : NODE_COLORS.experiment;
+  }, [groups]);
+
   const graphData = useMemo(() => {
     const nodes: GraphNode[] = [];
     const links: GraphLink[] = [];
 
-    // Experiment nodes
-    experiments.forEach((exp) => {
+    experiments.forEach((exp: any) => {
+      const color = colorByGroup && exp.group ? groupColor(exp.group) : NODE_COLORS.experiment;
       nodes.push({
-        id: `exp:${exp.slug}`,
-        label: exp.title,
+        id: `exp:${exp.id}`,
+        label: exp.title || exp.slug,
         type: "experiment",
         slug: exp.slug,
-        color: NODE_COLORS.experiment,
-        val: 8,
+        group: exp.group,
+        color,
+        val: 6,
       });
 
-      // Run nodes + links
-      const runs = runsByExp[exp.slug] ?? [];
-      runs.forEach((run) => {
-        const runId = `run:${exp.slug}:${run.run_index}`;
-        nodes.push({
-          id: runId,
-          label: run.label || `Run ${run.run_index}`,
-          type: "run",
-          color: NODE_COLORS.run,
-          val: 4,
+      if (showRuns && exp.runs) {
+        exp.runs.forEach((run: any) => {
+          const runId = `run:${run.id}`;
+          nodes.push({
+            id: runId,
+            label: run.label || `Run ${run.runIndex}`,
+            type: "run",
+            color: NODE_COLORS.run,
+            val: 3,
+          });
+          links.push({
+            source: `exp:${exp.id}`,
+            target: runId,
+            color: "#c4b5fd",
+          });
         });
-        links.push({
-          source: `exp:${exp.slug}`,
-          target: runId,
-          relation: "has_run",
-          color: "#c4b5fd",
-        });
-      });
+      }
+    });
 
-      // Artifact nodes + links
-      const artifacts = artifactsByExp[exp.slug] ?? [];
-      artifacts.forEach((art) => {
-        const artId = `art:${art.artifact_id}`;
-        nodes.push({
-          id: artId,
-          label: art.label || art.artifact_type,
-          type: "artifact",
-          color: NODE_COLORS.artifact,
-          val: 3,
-        });
-        // Link to run if available, otherwise to experiment
-        const matchingRun = runs.find((r) => r.run_id === art.run_id);
-        if (matchingRun) {
-          links.push({
-            source: `run:${exp.slug}:${matchingRun.run_index}`,
-            target: artId,
-            relation: "has_artifact",
-            color: "#fcd34d",
-          });
-        } else {
-          links.push({
-            source: `exp:${exp.slug}`,
-            target: artId,
-            relation: "has_artifact",
-            color: "#fcd34d",
-          });
+    // Group clustering: link experiments in the same group
+    if (colorByGroup) {
+      const byGroup = new Map<string, string[]>();
+      experiments.forEach((exp: any) => {
+        if (!exp.group) return;
+        const list = byGroup.get(exp.group) || [];
+        list.push(`exp:${exp.id}`);
+        byGroup.set(exp.group, list);
+      });
+      byGroup.forEach((ids) => {
+        for (let i = 1; i < ids.length; i++) {
+          links.push({ source: ids[0], target: ids[i], color: "#e5e7eb" });
         }
       });
-
-      // Doc links (from doc_slugs)
-      if (exp.doc_slugs) {
-        try {
-          const docSlugs: string[] = JSON.parse(exp.doc_slugs);
-          docSlugs.forEach((ds) => {
-            const docId = `doc:${ds}`;
-            links.push({
-              source: docId,
-              target: `exp:${exp.slug}`,
-              relation: "discusses",
-              color: "#6ee7b7",
-            });
-          });
-        } catch {}
-      }
-    });
+    }
 
     // Doc nodes
-    docs.forEach((doc: { slug: string; title: string }) => {
-      const docId = `doc:${doc.slug}`;
-      if (!nodes.find((n) => n.id === docId)) {
-        nodes.push({
-          id: docId,
-          label: doc.title || doc.slug,
-          type: "doc",
-          slug: doc.slug,
-          color: NODE_COLORS.doc,
-          val: 6,
-        });
-      }
-    });
-
-    // Also add doc nodes referenced by experiments but not in InstantDB
-    links.forEach((l) => {
-      const src = typeof l.source === "string" ? l.source : (l.source as any).id;
-      if (src.startsWith("doc:") && !nodes.find((n) => n.id === src)) {
-        const slug = src.replace("doc:", "");
-        nodes.push({
-          id: src,
-          label: slug,
-          type: "doc",
-          slug,
-          color: NODE_COLORS.doc,
-          val: 6,
-        });
-      }
+    docs.forEach((doc: any) => {
+      nodes.push({
+        id: `doc:${doc.id}`,
+        label: doc.title || doc.slug,
+        type: "doc",
+        slug: doc.slug,
+        color: NODE_COLORS.doc,
+        val: 5,
+      });
     });
 
     return { nodes, links };
-  }, [experiments, runsByExp, artifactsByExp, docs]);
+  }, [experiments, docs, showRuns, colorByGroup, groupColor]);
 
   const handleNodeClick = useCallback(
     (node: GraphNode) => {
-      if (node.type === "experiment" && node.slug) {
-        navigate(`/e/${node.slug}`);
-      } else if (node.type === "doc" && node.slug) {
-        navigate(`/doc/${node.slug}`);
-      }
+      if (node.type === "experiment" && node.slug) navigate(`/e/${node.slug}`);
+      else if (node.type === "doc" && node.slug) navigate(`/doc/${node.slug}`);
     },
     [navigate]
   );
@@ -221,34 +147,28 @@ export function GraphView() {
   const paintNode = useCallback(
     (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const size = node.val || 4;
-      const fontSize = Math.max(10 / globalScale, 1.5);
       const isHovered = hoveredNode?.id === node.id;
+      const fontSize = Math.max(10 / globalScale, 1.5);
 
-      // Node circle
       ctx.beginPath();
       ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
       ctx.fillStyle = node.color;
       ctx.globalAlpha = isHovered ? 1 : 0.85;
       ctx.fill();
 
-      // Hover ring
       if (isHovered) {
         ctx.strokeStyle = node.color;
         ctx.lineWidth = 2 / globalScale;
         ctx.stroke();
       }
 
-      // Label
-      if (globalScale > 0.7 || isHovered) {
-        ctx.globalAlpha = isHovered ? 1 : 0.7;
+      if (globalScale > 1.2 || isHovered) {
+        ctx.globalAlpha = isHovered ? 1 : 0.6;
         ctx.font = `${isHovered ? "bold " : ""}${fontSize}px sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         ctx.fillStyle = "#374151";
-        const label =
-          node.label.length > 30
-            ? node.label.slice(0, 28) + "…"
-            : node.label;
+        const label = node.label.length > 35 ? node.label.slice(0, 33) + "…" : node.label;
         ctx.fillText(label, node.x, node.y + size + 2);
       }
       ctx.globalAlpha = 1;
@@ -261,7 +181,16 @@ export function GraphView() {
       <header style={{ borderBottom: "1px solid #e5e7eb", padding: "0.5rem 1.5rem", display: "flex", alignItems: "center", gap: "1rem", background: "white" }}>
         <Link to="/" style={{ color: "#6b7280", fontSize: "0.85rem" }}>← Feed</Link>
         <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: 0 }}>Graph</h2>
-        <div style={{ marginLeft: "auto", display: "flex", gap: "0.75rem", alignItems: "center", fontSize: "0.75rem" }}>
+        <div style={{ marginLeft: "auto", display: "flex", gap: "1rem", alignItems: "center", fontSize: "0.75rem" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.3rem", cursor: "pointer" }}>
+            <input type="checkbox" checked={showRuns} onChange={e => setShowRuns(e.target.checked)} />
+            Show runs
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.3rem", cursor: "pointer" }}>
+            <input type="checkbox" checked={colorByGroup} onChange={e => setColorByGroup(e.target.checked)} />
+            Color by group
+          </label>
+          <span style={{ color: "#d1d5db" }}>|</span>
           {Object.entries(NODE_COLORS).map(([type, color]) => (
             <span key={type} style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, display: "inline-block" }} />
@@ -275,8 +204,8 @@ export function GraphView() {
       </header>
 
       <div ref={containerRef} style={{ flex: 1, position: "relative" }}>
-        {loading ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#6b7280", fontSize: "0.85rem" }}>
+        {isLoading ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#6b7280" }}>
             Loading graph...
           </div>
         ) : (
@@ -287,16 +216,14 @@ export function GraphView() {
             nodeCanvasObject={paintNode}
             nodePointerAreaPaint={(node: any, color: string, ctx: CanvasRenderingContext2D) => {
               ctx.beginPath();
-              ctx.arc(node.x, node.y, node.val + 4, 0, 2 * Math.PI);
+              ctx.arc(node.x, node.y, (node.val || 4) + 4, 0, 2 * Math.PI);
               ctx.fillStyle = color;
               ctx.fill();
             }}
             onNodeClick={handleNodeClick as any}
             onNodeHover={(node: any) => setHoveredNode(node)}
             linkColor={(link: any) => link.color || "#e5e7eb"}
-            linkWidth={1.5}
-            linkDirectionalArrowLength={4}
-            linkDirectionalArrowRelPos={0.9}
+            linkWidth={0.8}
             cooldownTicks={100}
             d3AlphaDecay={0.02}
             d3VelocityDecay={0.3}
@@ -304,21 +231,15 @@ export function GraphView() {
           />
         )}
 
-        {/* Hover tooltip */}
         {hoveredNode && (
           <div style={{
             position: "absolute", top: 12, right: 12, background: "white", border: "1px solid #e5e7eb",
-            borderRadius: 8, padding: "0.75rem 1rem", fontSize: "0.8rem", maxWidth: 280, boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            borderRadius: 8, padding: "0.75rem 1rem", fontSize: "0.8rem", maxWidth: 300, boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
           }}>
-            <div style={{ fontWeight: 600, marginBottom: "0.25rem", color: hoveredNode.color }}>
-              {hoveredNode.type}
-            </div>
+            <div style={{ fontWeight: 600, marginBottom: "0.25rem", color: hoveredNode.color }}>{hoveredNode.type}</div>
             <div style={{ color: "#374151" }}>{hoveredNode.label}</div>
-            {hoveredNode.slug && (
-              <div style={{ color: "#9ca3af", fontSize: "0.7rem", fontFamily: "monospace", marginTop: "0.15rem" }}>
-                {hoveredNode.slug}
-              </div>
-            )}
+            {hoveredNode.slug && <div style={{ color: "#9ca3af", fontSize: "0.7rem", fontFamily: "monospace", marginTop: "0.15rem" }}>{hoveredNode.slug}</div>}
+            {hoveredNode.group && <div style={{ color: "#6b7280", fontSize: "0.7rem", marginTop: "0.15rem" }}>Group: {hoveredNode.group}</div>}
           </div>
         )}
       </div>
