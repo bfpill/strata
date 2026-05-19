@@ -8,7 +8,10 @@ import { dataRouter } from "./routes/data";
 const app = new Hono<AppEnv>();
 
 // CORS for frontend
-app.use("*", cors({ origin: "*" }));
+app.use("*", cors({
+  origin: "*",
+  exposeHeaders: ["Content-Range", "Accept-Ranges", "Content-Length"],
+}));
 
 // Health check
 app.get("/health", (c) => c.json({ status: "ok", service: "strata" }));

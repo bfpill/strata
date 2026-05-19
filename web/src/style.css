@@ -381,3 +381,5 @@ body.resize-dragging iframe, body.resize-dragging .artifact-content { pointer-ev
 .tm-graph-svg { display: block; margin: 0 auto; }
 .code-browser-extras { padding: 0.4rem 1rem; display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.8rem; color: #6b7280; border-bottom: 1px solid #f0f0f0; }
 .code-browser-extra-item { font-family: monospace; }
+
+.section-label { font-size: 0.75rem; font-weight: 600; color: #9ca3af; cursor: pointer; margin-bottom: 4px; }

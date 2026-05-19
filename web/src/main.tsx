@@ -11,6 +11,7 @@ import { ComponentPage } from "./pages/ComponentDetail";
 import { DocPage } from "./pages/Documents";
 import { SimulationPage } from "./pages/Simulation";
 import { LaminaeLayout } from "./pages/LaminaeLayout";
+import { ModeBrowser } from "./pages/ModeBrowser";
 import "./components/laminae";
 import "./style.css";
 
@@ -24,6 +25,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/g/:group" element={<GroupListing />} />
         <Route path="/graph" element={<GraphView />} />
         <Route path="/trash" element={<Trash />} />
+        <Route path="/modes" element={<ModeBrowser />} />
         {/* Laminae pages */}
         <Route path="/catalog" element={<LaminaeLayout><CatalogPage /></LaminaeLayout>} />
         <Route path="/component/:id" element={<LaminaeLayout><ComponentPage /></LaminaeLayout>} />

@@ -17,10 +17,14 @@
     }
   ],
 
-  // R2 bucket binding
+  // R2 bucket bindings
   "r2_buckets": [
     {
       "binding": "BUCKET",
+      "bucket_name": "aixi"
+    },
+    {
+      "binding": "PATTERNING_BUCKET",
       "bucket_name": "patterning"
     }
   ],
