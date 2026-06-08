@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import * as cov from '../lib/covModes'
+import { RUNS, type RunDef } from '../lib/covModes'
 
 // ── Helpers ──────────────────────────────────────────────
 
@@ -265,7 +266,6 @@ function StatsBreakdown({ stats }: { stats: cov.RangeStats }) {
 
 function BigramTableFromStats({ rows }: { rows: cov.RangeStats['bigramRows'] }) {
   if (rows.length === 0) return null
-  const maxCount = rows[0].count
 
   return (
     <div>
@@ -356,6 +356,7 @@ function MiniBarChart({ title, items, total, mono }: {
 // ── Main page ────────────────────────────────────────────
 
 export function ModeBrowser() {
+  const [selectedRun, setSelectedRun] = useState<RunDef>(RUNS[0])
   const [meta, setMeta] = useState<cov.CovMeta | null>(null)
   const [histograms, setHistograms] = useState<cov.ModeHistogram[] | null>(null)
   const [selectedMode, setSelectedMode] = useState(1)
@@ -366,7 +367,6 @@ export function ModeBrowser() {
   const [sampling, setSampling] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [binaryReady, setBinaryReady] = useState(false)
-  const [modeReady, setModeReady] = useState(false)
   const [modeLoading, setModeLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [initDone, setInitDone] = useState(false)
@@ -375,30 +375,40 @@ export function ModeBrowser() {
   const usedRef = useRef(new Set<number>())
   const sentinelRef = useRef<HTMLDivElement>(null)
   const BATCH = 30
+  const prefix = selectedRun.prefix
+
+  const switchRun = useCallback((run: RunDef) => {
+    setSelectedRun(run)
+    setMeta(null); setHistograms(null); setThumbUrls([])
+    setSelectedMode(1); setSamples([]); setRangeStats(null)
+    setRangeLo(''); setRangeHi('')
+    setBinaryReady(false)
+    setInitDone(false); setError(null)
+    filteredRef.current = null; usedRef.current = new Set()
+  }, [])
 
   useEffect(() => {
-    Promise.all([cov.getMeta(), cov.getHistograms()])
+    Promise.all([cov.getMeta(prefix), cov.getHistograms(prefix)])
       .then(([m, h]) => {
         setMeta(m); setHistograms(h); setInitDone(true)
-        Promise.all(Array.from({ length: m.modes.k_top }, (_, k) => cov.histogramThumbUrl(k)))
+        Promise.all(Array.from({ length: m.modes.k_top }, (_, k) => cov.histogramThumbUrl(k, prefix)))
           .then(urls => setThumbUrls(urls))
       })
       .catch(e => { setError(e.message); setInitDone(true) })
-  }, [])
+  }, [prefix])
 
   useEffect(() => {
-    cov.preloadBinaryData()
+    cov.preloadBinaryData(prefix)
       .then(() => setBinaryReady(true))
       .catch(() => {})
-  }, [])
+  }, [prefix])
 
   useEffect(() => {
-    setModeReady(false)
     setModeLoading(true)
-    cov.loadFullMode(selectedMode)
-      .then(() => { setModeReady(true); setModeLoading(false) })
+    cov.loadFullMode(selectedMode, prefix)
+      .then(() => setModeLoading(false))
       .catch(() => setModeLoading(false))
-  }, [selectedMode])
+  }, [selectedMode, prefix])
 
   const currentHist = histograms?.[selectedMode] ?? null
   const sigma = meta?.modes.sigma_top[selectedMode] ?? 0
@@ -427,30 +437,30 @@ export function ModeBrowser() {
         batch.push({ value: filtered.values[idx], positionIdx: filtered.indices[idx] })
       }
       if (batch.length > 0) {
-        const resolved = await cov.resolveSamples(batch)
+        const resolved = await cov.resolveSamples(batch, 15, prefix)
         resolved.sort((a, b) => b.value - a.value)
         setSamples(prev => append ? [...prev, ...resolved] : resolved)
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e))
     } finally { setSampling(false); setLoadingMore(false) }
-  }, [])
+  }, [prefix])
 
   const computeForRange = useCallback(async (lo: number, hi: number) => {
     setSampling(true); setError(null)
     usedRef.current = new Set()
     try {
-      const modeData = await cov.loadFullMode(selectedMode)
+      const modeData = await cov.loadFullMode(selectedMode, prefix)
       const filtered = cov.filterRange(modeData, lo, hi)
       filteredRef.current = filtered
-      const stats = await cov.computeRangeStats(filtered.indices)
+      const stats = await cov.computeRangeStats(filtered.indices, prefix)
       setRangeStats(stats)
       await loadBatch(false)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e))
       setSampling(false)
     }
-  }, [selectedMode, loadBatch])
+  }, [selectedMode, prefix, loadBatch])
 
   const handleRangeSelect = useCallback((lo: number, hi: number) => {
     setRangeLo(lo.toPrecision(6))
@@ -495,9 +505,21 @@ export function ModeBrowser() {
       <div className="detail-header">
         <Link to="/" className="back-link">← Feed</Link>
         <h2>Cov-Mode Browser</h2>
+        <select
+          value={selectedRun.id}
+          onChange={e => { const r = RUNS.find(r => r.id === e.target.value); if (r) switchRun(r) }}
+          style={{
+            fontSize: '0.75rem', padding: '2px 6px', border: '1px solid #d1d5db',
+            borderRadius: 4, background: 'white', color: '#374151', cursor: 'pointer',
+          }}
+        >
+          {RUNS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+        </select>
         {meta && (
           <span className="header-meta">
-            {meta.model.name} · step {meta.model.step?.toLocaleString()} · {fmtCount(meta.probe.n_positions_total)} tokens · eff. rank {meta.modes.effective_rank}
+            {meta.model?.name ?? meta.source?.tokenizer ?? 'unknown'}
+            {meta.model?.step != null && ` · step ${meta.model.step.toLocaleString()}`}
+            {' · '}{fmtCount(meta.probe.n_positions_total)} tokens · eff. rank {meta.modes.effective_rank}
           </span>
         )}
       </div>

@@ -296,9 +296,10 @@ export interface ModePaneProps {
   rangeHi?: number
   height?: number
   channel?: string
+  prefix?: string
 }
 
-export function ModePaneComponent({ mode, rangeLo: initLo, rangeHi: initHi, height = 700, channel }: ModePaneProps) {
+export function ModePaneComponent({ mode, rangeLo: initLo, rangeHi: initHi, height = 700, channel, prefix }: ModePaneProps) {
   const ch = channel ?? `mode-${mode}`
   const [meta, setMeta] = useState<cov.CovMeta | null>(null)
   const [histograms, setHistograms] = useState<cov.ModeHistogram[] | null>(null)
@@ -317,10 +318,10 @@ export function ModePaneComponent({ mode, rangeLo: initLo, rangeHi: initHi, heig
   const BATCH = 30
 
   useEffect(() => {
-    Promise.all([cov.getMeta(), cov.getHistograms(), cov.preloadBinaryData(), cov.loadFullMode(mode)])
+    Promise.all([cov.getMeta(prefix), cov.getHistograms(prefix), cov.preloadBinaryData(prefix), cov.loadFullMode(mode, prefix)])
       .then(([m, h]) => { setMeta(m); setHistograms(h); setReady(true) })
       .catch(e => setError(e.message))
-  }, [mode])
+  }, [mode, prefix])
 
   // Auto-compute if initial range was provided
   useEffect(() => {
@@ -355,7 +356,7 @@ export function ModePaneComponent({ mode, rangeLo: initLo, rangeHi: initHi, heig
       const batch = shuffled.slice(start, end).map(i => ({
         value: filtered.values[i], positionIdx: filtered.indices[i],
       }))
-      const resolved = await cov.resolveSamples(batch, ctxSize)
+      const resolved = await cov.resolveSamples(batch, ctxSize, prefix)
       resolved.sort((a, b) => b.value - a.value)
       setSamples(prev => append ? [...prev, ...resolved] : resolved)
     } catch (e: unknown) {
@@ -366,10 +367,9 @@ export function ModePaneComponent({ mode, rangeLo: initLo, rangeHi: initHi, heig
   const computeForRange = useCallback(async (lo: number, hi: number) => {
     setSampling(true); setError(null)
     try {
-      const modeData = await cov.loadFullMode(mode)
+      const modeData = await cov.loadFullMode(mode, prefix)
       const filtered = cov.filterRange(modeData, lo, hi)
       filteredRef.current = filtered
-      // Fisher-Yates shuffle of indices [0..len)
       const order = Array.from({ length: filtered.values.length }, (_, i) => i)
       for (let i = order.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
@@ -377,7 +377,7 @@ export function ModePaneComponent({ mode, rangeLo: initLo, rangeHi: initHi, heig
       }
       shuffledRef.current = order
       cursorRef.current = 0
-      const stats = await cov.computeRangeStats(filtered.indices)
+      const stats = await cov.computeRangeStats(filtered.indices, prefix)
       setRangeStats(stats)
       await loadBatch(false)
     } catch (e: unknown) {
@@ -417,7 +417,7 @@ export function ModePaneComponent({ mode, rangeLo: initLo, rangeHi: initHi, heig
     if (samples.length === 0) return
     let cancelled = false
     const records = samples.map(s => ({ value: s.value, positionIdx: s.positionIdx }))
-    cov.resolveSamples(records, ctxSize).then(resolved => {
+    cov.resolveSamples(records, ctxSize, prefix).then(resolved => {
       if (!cancelled) setSamples(resolved.sort((a, b) => b.value - a.value))
     })
     return () => { cancelled = true }
@@ -625,6 +625,7 @@ register<ModePaneProps>({
       { name: 'rangeHi', type: 'number', description: 'Initial range upper bound' },
       { name: 'height', type: 'number', description: 'Pane height in pixels (default 700)' },
       { name: 'channel', type: 'string', description: 'Channel name for receiving range commands (default: mode-{N})' },
+      { name: 'prefix', type: 'string', description: 'R2 key prefix for run data (default: first run)' },
     ],
   },
   component: ModePaneComponent,

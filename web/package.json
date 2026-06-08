@@ -13,7 +13,6 @@
   "dependencies": {
     "@instantdb/react": "^1.0.27",
     "@mdx-js/mdx": "^3.1.1",
-    "@noisy-tm/ui": "file:../../../noisy/packages/ui",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.3.0",
     "@types/react-plotly.js": "^2.6.4",
